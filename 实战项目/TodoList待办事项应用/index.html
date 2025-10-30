@@ -3,7 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>现代待办事项应用</title>
+    <title>JavaScript待办事项应用</title>
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23fff'/><text x='50' y='70' font-family='Arial' font-size='60' text-anchor='middle' fill='%23000'>⭐️</text></svg>" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <style>
       * {
@@ -331,8 +335,8 @@
       <div class="todo-app">
         <div class="header">
           <h1>
-            <i class="fas fa-tasks"></i>
-            待办事项清单
+            <i class="fab fa-js-square"></i>
+            JavaScript待办事项
           </h1>
           <div class="date-display" id="currentDate"></div>
         </div>
@@ -340,8 +344,8 @@
         <div class="input-section">
           <input type="text" class="task-input" id="taskInput" placeholder="添加新任务..." autocomplete="off" />
           <button class="add-btn" id="addTaskBtn">
-            <i class="fas fa-plus"></i>
-            添加
+            <i class="fab fa-js"></i>
+            添加任务
           </button>
         </div>
 
@@ -393,9 +397,9 @@
 
         // 设置添加任务按钮事件
         addTaskBtn.addEventListener("click", addTask)
-        
+
         // 设置输入框回车事件
-        taskInput.addEventListener("keypress", function(e) {
+        taskInput.addEventListener("keypress", function (e) {
           if (e.key === "Enter") {
             addTask()
           }
@@ -403,18 +407,18 @@
 
         // 设置筛选器按钮事件
         for (let i = 0; i < filterBtns.length; i++) {
-          filterBtns[i].addEventListener("click", function() {
+          filterBtns[i].addEventListener("click", function () {
             // 移除所有按钮的激活状态
             for (let j = 0; j < filterBtns.length; j++) {
               filterBtns[j].classList.remove("active")
             }
-            
+
             // 设置当前按钮为激活状态
             this.classList.add("active")
-            
+
             // 更新筛选器
             currentFilter = this.getAttribute("data-filter")
-            
+
             // 重新渲染任务
             renderTasks()
           })
@@ -459,7 +463,7 @@
           id: Date.now(),
           text: taskText,
           completed: false,
-          createdAt: new Date().toISOString()
+          createdAt: new Date().toISOString(),
         }
 
         tasks.push(newTask)
@@ -534,12 +538,8 @@
             title = "没有已完成的任务"
             message = "完成一些任务吧！"
           }
-          
-          taskList.innerHTML = '<div class="empty-state">' +
-            '<i class="fas fa-clipboard-list"></i>' +
-            '<h3>' + title + '</h3>' +
-            '<p>' + message + '</p>' +
-            '</div>'
+
+          taskList.innerHTML = '<div class="empty-state">' + '<i class="fab fa-js-square"></i>' + "<h3>" + title + "</h3>" + "<p>" + message + "</p>" + "</div>"
           updateTaskCount()
           return
         }
@@ -551,23 +551,38 @@
           const checkedClass = task.completed ? "checked" : ""
           const completedClass = task.completed ? "completed" : ""
           const checkIcon = task.completed ? '<i class="fas fa-check"></i>' : ""
-          
-          html += '<div class="task-item" data-id="' + task.id + '">' +
-            '<div class="task-check ' + checkedClass + '" onclick="toggleTaskStatus(' + task.id + ')">' +
+
+          html +=
+            '<div class="task-item" data-id="' +
+            task.id +
+            '">' +
+            '<div class="task-check ' +
+            checkedClass +
+            '" onclick="toggleTaskStatus(' +
+            task.id +
+            ')">' +
             checkIcon +
-            '</div>' +
-            '<div class="task-text ' + completedClass + '">' + task.text + '</div>' +
+            "</div>" +
+            '<div class="task-text ' +
+            completedClass +
+            '">' +
+            task.text +
+            "</div>" +
             '<div class="task-actions">' +
-            '<button class="edit-btn" onclick="startEditTask(' + task.id + ')">' +
+            '<button class="edit-btn" onclick="startEditTask(' +
+            task.id +
+            ')">' +
             '<i class="fas fa-edit"></i>' +
-            '</button>' +
-            '<button class="delete-btn" onclick="deleteTask(' + task.id + ')">' +
+            "</button>" +
+            '<button class="delete-btn" onclick="deleteTask(' +
+            task.id +
+            ')">' +
             '<i class="fas fa-trash"></i>' +
-            '</button>' +
-            '</div>' +
-            '</div>'
+            "</button>" +
+            "</div>" +
+            "</div>"
         }
-        
+
         taskList.innerHTML = html
         updateTaskCount()
       }
@@ -577,29 +592,29 @@
         // 找到任务项和任务文本
         const taskItem = document.querySelector('[data-id="' + id + '"]')
         const taskText = taskItem.querySelector(".task-text")
-        
+
         // 创建编辑输入框
         const editInput = document.createElement("input")
         editInput.type = "text"
         editInput.className = "task-edit"
         editInput.value = taskText.textContent
-        
+
         // 替换任务文本为输入框
         taskText.replaceWith(editInput)
-        
+
         // 自动聚焦并选中文本
         editInput.focus()
         editInput.select()
-        
+
         // 添加键盘事件监听
-        editInput.addEventListener("keypress", function(e) {
+        editInput.addEventListener("keypress", function (e) {
           if (e.key === "Enter") {
             finishEditTask(id, editInput)
           }
         })
-        
+
         // 添加失去焦点事件
-        editInput.addEventListener("blur", function() {
+        editInput.addEventListener("blur", function () {
           finishEditTask(id, editInput)
         })
       }
@@ -618,12 +633,12 @@
       function showTaskAddedAnimation() {
         const taskList = document.getElementById("taskList")
         const lastTask = taskList.lastElementChild
-        
+
         if (lastTask) {
           lastTask.style.transform = "scale(0.9)"
           lastTask.style.opacity = "0"
-          
-          setTimeout(function() {
+
+          setTimeout(function () {
             lastTask.style.transition = "all 0.3s ease"
             lastTask.style.transform = "scale(1)"
             lastTask.style.opacity = "1"
