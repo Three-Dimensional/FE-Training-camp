@@ -191,9 +191,8 @@
 
       .weather-details {
         display: grid;
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(3, 1fr);
         gap: 20px;
-        max-width: 300px;
       }
 
       .detail-item {
@@ -457,6 +456,77 @@
 
       /* 改进的天气详情布局 - 已在前文定义，此处移除重复定义 */
 
+      /* 生活指数样式 */
+      .life-suggestions-section {
+        margin-top: 30px;
+      }
+
+      .suggestions-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+        margin-top: 20px;
+      }
+
+      .suggestion-card {
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 20px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+      }
+
+      .suggestion-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+      }
+
+      .suggestion-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 15px;
+      }
+
+      .suggestion-header i {
+        font-size: 1.5rem;
+        color: #ff9a8b;
+      }
+
+      .suggestion-header h3 {
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin: 0;
+      }
+
+      .suggestion-content {
+        line-height: 1.6;
+      }
+
+      .suggestion-brief {
+        font-size: 1.1rem;
+        font-weight: 500;
+        color: #ff9a8b;
+        margin-bottom: 8px;
+      }
+
+      .suggestion-details {
+        font-size: 0.95rem;
+        opacity: 0.9;
+        line-height: 1.5;
+      }
+
+      .suggestions-placeholder {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 150px;
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 1.1rem;
+      }
+
       /* 响应式调整 */
       @media (max-width: 768px) {
         .forecast-details {
@@ -477,6 +547,15 @@
           text-align: center;
           gap: 15px;
         }
+
+        .suggestions-grid {
+          grid-template-columns: 1fr;
+          gap: 15px;
+        }
+
+        .suggestion-card {
+          padding: 15px;
+        }
       }
 
       @media (max-width: 480px) {
@@ -490,6 +569,24 @@
 
         .forecast-card {
           min-width: 100%;
+        }
+
+        .suggestion-header {
+          flex-direction: column;
+          text-align: center;
+          gap: 8px;
+        }
+
+        .suggestion-header h3 {
+          font-size: 1.1rem;
+        }
+
+        .suggestion-brief {
+          font-size: 1rem;
+        }
+
+        .suggestion-details {
+          font-size: 0.9rem;
         }
       }
     </style>
@@ -595,8 +692,29 @@
               </div>
             </div>
           </div>
+        </div>
 
-
+        <!-- 生活指数部分 -->
+        <div class="life-suggestions-section" v-if="lifeSuggestions.length > 0">
+          <h2 class="section-title">
+            <i class="fas fa-heart"></i>
+            生活指数建议
+          </h2>
+          <div class="suggestions-grid">
+            <div class="suggestion-card" v-for="(suggestion, index) in lifeSuggestions" :key="index">
+              <div class="suggestion-header">
+                <i :class="'fas ' + suggestion.icon"></i>
+                <h3>{{ suggestion.label }}</h3>
+              </div>
+              <div class="suggestion-content">
+                <div class="suggestion-brief">{{ suggestion.brief }}</div>
+                <div class="suggestion-details">{{ suggestion.details }}</div>
+              </div>
+            </div>
+          </div>
+          <div v-if="lifeSuggestions.length === 0" class="suggestions-placeholder">
+            <p>生活指数加载中...</p>
+          </div>
         </div>
       </div>
 
@@ -626,6 +744,9 @@
           // API配置
           API_KEY: "cd6262e8f806b3f73d44d67031d96709", // 高德天气API密钥（需要申请）
           WEATHER_API_URL: "https://restapi.amap.com/v3/weather/weatherInfo",
+          // 心知天气生活指数API配置
+          SENIVERSE_API_KEY: "SvR5l2gdLKh8X8AmN", // 心知天气API密钥
+          SENIVERSE_LIFE_API_URL: "https://api.seniverse.com/v3/life/suggestion.json",
           // 高德天气API支持实时天气和预报，通过extensions参数区分
           // extensions=base: 实时天气
           // extensions=all: 天气预报（3天）
@@ -639,6 +760,9 @@
           currentLocation: "",
           forecastData: [],
           updateTime: "--",
+
+          // 生活指数数据
+          lifeSuggestions: [],
 
           // 图表数据
           chartData: {
@@ -663,46 +787,46 @@
            */
           weatherDetails() {
             if (!this.currentWeather) return []
-            
+
             return [
               {
                 icon: "fa-wind",
                 value: this.currentWeather.windSpeed,
                 label: "风力",
-                suffix: ""
+                suffix: "",
               },
               {
                 icon: "fa-tint",
                 value: this.currentWeather.humidity,
                 label: "湿度",
-                suffix: "%"
+                suffix: "%",
               },
               {
                 icon: "fa-compass",
                 value: this.currentWeather.windDirection,
                 label: "风向",
-                suffix: ""
+                suffix: "",
               },
               {
                 icon: "fa-thermometer-half",
                 value: this.currentWeather.feelsLike,
                 label: "体感温度",
-                suffix: "°C"
+                suffix: "°C",
               },
               {
                 icon: "fa-eye",
                 value: this.currentWeather.visibility,
                 label: "能见度",
-                suffix: "km"
+                suffix: "km",
               },
               {
                 icon: "fa-clock",
                 value: this.currentWeather.reportTime,
                 label: "更新时间",
-                suffix: ""
-              }
+                suffix: "",
+              },
             ]
-          }
+          },
         },
         methods: {
           /**
@@ -792,6 +916,8 @@
                 this.displayCurrentWeather(currentData, cityName)
                 // 获取天气预报
                 await this.fetchWeatherForecast(cityName)
+                // 获取生活指数
+                await this.fetchLifeSuggestion(cityName)
               } else {
                 this.showError("城市名称无效或未找到")
               }
@@ -820,6 +946,82 @@
           },
 
           /**
+           * 获取生活指数（心知天气API）
+           */
+          async fetchLifeSuggestion(cityName) {
+            try {
+              // 使用您提供的完整URL，包含正确的API密钥
+              const apiUrl = `https://api.seniverse.com/v3/life/suggestion.json?key=SvR5l2gdLKh8X8AmN&location=${encodeURIComponent(cityName)}&language=zh-Hans&days=5`
+
+              const response = await fetch(apiUrl)
+
+              if (!response.ok) {
+                throw new Error(`API请求失败: ${response.status}`)
+              }
+
+              const data = await response.json()
+
+              if (data.results && data.results.length > 0) {
+                const result = data.results[0]
+                if (result.suggestion) {
+                  // 提取关键的生活指数信息
+                  this.lifeSuggestions = this.processLifeSuggestions(result.suggestion)
+                  // 强制Vue重新渲染
+                  this.$forceUpdate()
+                }
+              } else {
+              }
+            } catch (error) {}
+          },
+
+          /**
+           * 处理生活指数数据
+           */
+          processLifeSuggestions(suggestions) {
+            // suggestions是一个数组，需要遍历处理
+            if (!Array.isArray(suggestions) || suggestions.length === 0) {
+              return this.getMockLifeSuggestions()
+            }
+
+            // 定义需要显示的生活指数类型
+            const importantTypes = ["dressing", "car_washing", "flu", "sport", "uv", "comfort"]
+            
+            // 映射生活指数类型到显示信息
+            const typeMap = {
+              dressing: { label: "穿衣指数", icon: "fa-tshirt" },
+              car_washing: { label: "洗车指数", icon: "fa-car" },
+              flu: { label: "感冒指数", icon: "fa-head-side-cough" },
+              sport: { label: "运动指数", icon: "fa-running" },
+              uv: { label: "紫外线指数", icon: "fa-sun" },
+              comfort: { label: "舒适度指数", icon: "fa-smile" }
+            }
+
+            // 过滤出需要显示的生活指数
+            const result = suggestions
+              .filter(suggestion => importantTypes.includes(suggestion.name))
+              .map(suggestion => ({
+                label: typeMap[suggestion.name]?.label || suggestion.name,
+                icon: typeMap[suggestion.name]?.icon || "fa-info-circle",
+                brief: suggestion.brief || "暂无数据",
+                details: suggestion.details || "数据加载中..."
+              }))
+
+            // 如果API返回的数据为空，使用模拟数据
+            if (result.length === 0) {
+              return this.getMockLifeSuggestions()
+            }
+
+            return result
+          },
+
+          /**
+           * 获取模拟生活指数数据
+           */
+          getMockLifeSuggestions(cityName) {
+            return []
+          },
+
+          /**
            * 显示当前天气（高德API）
            */
           displayCurrentWeather(data, cityName) {
@@ -840,7 +1042,7 @@
               this.currentLocation = cityName
               this.updateTime = new Date().toLocaleString("zh-CN")
               this.errorMessage = ""
-              
+
               // 更新背景样式
               this.updateBackground()
             }
@@ -905,12 +1107,8 @@
             if (data.forecasts && data.forecasts.length > 0) {
               const forecastData = data.forecasts[0]
               this.chartData = {
-                labels: forecastData.casts.slice(0, 4).map(cast => 
-                  new Date(cast.date).toLocaleDateString("zh-CN", { month: "short", day: "numeric" })
-                ),
-                temps: forecastData.casts.slice(0, 4).map(cast => 
-                  Math.round((parseInt(cast.daytemp) + parseInt(cast.nighttemp)) / 2)
-                )
+                labels: forecastData.casts.slice(0, 4).map((cast) => new Date(cast.date).toLocaleDateString("zh-CN", { month: "short", day: "numeric" })),
+                temps: forecastData.casts.slice(0, 4).map((cast) => Math.round((parseInt(cast.daytemp) + parseInt(cast.nighttemp)) / 2)),
               }
               this.createCharts()
             }
