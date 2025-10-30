@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>现代简约计算器</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      }
+
+      body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        padding: 20px;
+        color: #1f2937;
+      }
+
+      .calculator-container {
+        width: 100%;
+        max-width: 380px;
+        background: #fafbfc;
+        border-radius: 24px;
+        box-shadow: 
+          0 20px 40px rgba(0, 0, 0, 0.08),
+          0 0 0 1px rgba(0, 0, 0, 0.02);
+        overflow: hidden;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.8);
+      }
+
+      .header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 20px 24px;
+        text-align: center;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .title {
+        font-size: 1.6rem;
+        font-weight: 600;
+        color: white;
+        letter-spacing: 0.5px;
+      }
+
+      .display {
+        padding: 24px;
+        min-height: 140px;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        justify-content: flex-end;
+        background: #ffffff;
+        border-bottom: 1px solid #f1f3f4;
+      }
+
+      .expression {
+        font-size: 1.4rem;
+        color: #718096;
+        margin-bottom: 8px;
+        min-height: 28px;
+        text-align: right;
+        width: 100%;
+        font-weight: 400;
+      }
+
+      .history {
+        font-size: 1.1rem;
+        min-height: 28px;
+        color: #718096;
+        margin-bottom: 12px;
+        width: 100%;
+        text-align: right;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-weight: 400;
+      }
+
+      .result {
+        font-size: 3.2rem;
+        font-weight: 300;
+        width: 100%;
+        text-align: right;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        color: #1a202c;
+        line-height: 1.1;
+      }
+
+      .keypad {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+        padding: 24px;
+        background: #fafbfc;
+      }
+
+      .btn {
+        height: 68px;
+        border: none;
+        border-radius: 16px;
+        font-size: 1.4rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        color: #2d3748;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: relative;
+        overflow: hidden;
+        background: #f7fafc;
+        box-shadow: 
+          0 2px 4px rgba(0, 0, 0, 0.05),
+          0 1px 0 rgba(255, 255, 255, 0.8) inset;
+      }
+
+      .btn::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0.2) 100%);
+        opacity: 0;
+        transition: opacity 0.2s ease;
+      }
+
+      .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 
+          0 8px 16px rgba(0, 0, 0, 0.1),
+          0 1px 0 rgba(255, 255, 255, 0.8) inset;
+      }
+
+      .btn:hover::before {
+        opacity: 1;
+      }
+
+      .btn:active {
+        transform: translateY(0);
+        box-shadow: 
+          0 2px 4px rgba(0, 0, 0, 0.05),
+          0 1px 0 rgba(255, 255, 255, 0.8) inset;
+      }
+
+      .number {
+        background: #ffffff;
+        color: #1f2937;
+        border: 1px solid #f1f3f4;
+      }
+
+      .number:hover {
+        background: #f8fafc;
+        border-color: #e5e7eb;
+      }
+
+      .operator {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        font-size: 1.5rem;
+      }
+
+      .operator:hover {
+        background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+      }
+
+      .function {
+        background: #f3f4f6;
+        color: #4b5563;
+        font-size: 1.3rem;
+        border: 1px solid #e5e7eb;
+      }
+
+      .function:hover {
+        background: #e5e7eb;
+        border-color: #d1d5db;
+      }
+
+      .equals {
+        background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+        color: white;
+        font-size: 1.8rem;
+        font-weight: 600;
+      }
+
+      .equals:hover {
+        background: linear-gradient(135deg, #38a169 0%, #2f855a 100%);
+      }
+
+      .clear {
+        background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+        color: white;
+        font-weight: 600;
+      }
+
+      .clear:hover {
+        background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%);
+      }
+
+
+
+      @media (max-width: 500px) {
+        .calculator-container {
+          max-width: 95%;
+          border-radius: 20px;
+        }
+
+        .btn {
+          height: 64px;
+          font-size: 1.3rem;
+          border-radius: 14px;
+        }
+
+        .result {
+          font-size: 2.8rem;
+        }
+
+        .keypad {
+          gap: 10px;
+          padding: 20px;
+        }
+
+        .display {
+          padding: 20px;
+          min-height: 120px;
+        }
+      }
+
+      @media (max-width: 380px) {
+        .btn {
+          height: 60px;
+          font-size: 1.2rem;
+        }
+
+        .result {
+          font-size: 2.4rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="calculator-container">
+      <div class="header">
+        <div class="title">现代计算器</div>
+      </div>
+
+      <div class="display">
+        <div class="expression" id="expressionDisplay"></div>
+        <div class="result" id="resultDisplay">0</div>
+      </div>
+
+      <div class="keypad">
+        <button class="btn clear" onclick="clearAll()">C</button>
+        <button class="btn function" onclick="backspace()">⌫</button>
+        <button class="btn function" onclick="toggleSign()">±</button>
+        <button class="btn operator" onclick="appendOperator('/')">÷</button>
+
+        <button class="btn number" onclick="appendNumber('7')">7</button>
+        <button class="btn number" onclick="appendNumber('8')">8</button>
+        <button class="btn number" onclick="appendNumber('9')">9</button>
+        <button class="btn operator" onclick="appendOperator('*')">×</button>
+
+        <button class="btn number" onclick="appendNumber('4')">4</button>
+        <button class="btn number" onclick="appendNumber('5')">5</button>
+        <button class="btn number" onclick="appendNumber('6')">6</button>
+        <button class="btn operator" onclick="appendOperator('-')">−</button>
+
+        <button class="btn number" onclick="appendNumber('1')">1</button>
+        <button class="btn number" onclick="appendNumber('2')">2</button>
+        <button class="btn number" onclick="appendNumber('3')">3</button>
+        <button class="btn operator" onclick="appendOperator('+')">+</button>
+
+        <button class="btn number" onclick="appendNumber('0')" style="grid-column: span 2;">0</button>
+        <button class="btn function" onclick="appendDecimal()">.</button>
+        <button class="btn function" onclick="calculatePercentage()">%</button>
+        <button class="btn equals" onclick="calculate()">=</button>
+      </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // 计算器状态
+      let currentInput = "0"
+      let previousInput = ""
+      let operation = null
+      let currentExpression = ""
+
+      // DOM 元素
+      const resultDisplay = document.getElementById("resultDisplay")
+      const expressionDisplay = document.getElementById("expressionDisplay")
+
+      // 初始化
+      function init() {
+        updateDisplay()
+      }
+
+      // 添加数字
+      function appendNumber(num) {
+        if (currentInput === "0" && num !== ".") {
+          currentInput = num
+        } else {
+          currentInput += num
+        }
+        updateDisplay()
+      }
+
+      // 添加小数点
+      function appendDecimal() {
+        if (!currentInput.includes(".")) {
+          currentInput += "."
+          updateDisplay()
+        }
+      }
+
+      // 切换正负号
+      function toggleSign() {
+        if (currentInput !== "0") {
+          currentInput = currentInput.startsWith("-") ? currentInput.slice(1) : "-" + currentInput
+          updateDisplay()
+        }
+      }
+
+      // 添加运算符
+      function appendOperator(op) {
+        if (currentInput === "" || currentInput === "-") return
+
+        if (previousInput !== "") {
+          calculate()
+        }
+
+        operation = op
+        previousInput = currentInput
+        currentExpression = `${currentInput} ${op}`
+        currentInput = ""
+        updateDisplay()
+      }
+
+      // 计算百分比
+      function calculatePercentage() {
+        if (currentInput === "") return
+
+        const value = parseFloat(currentInput)
+        currentInput = (value / 100).toString()
+        updateDisplay()
+      }
+
+      // 删除最后一个字符
+      function backspace() {
+        if (currentInput.length > 1) {
+          currentInput = currentInput.slice(0, -1)
+        } else {
+          currentInput = "0"
+        }
+        updateDisplay()
+      }
+
+      // 清除所有
+      function clearAll() {
+        currentInput = "0"
+        previousInput = ""
+        operation = null
+        currentExpression = ""
+        updateDisplay()
+      }
+
+      // 执行计算
+      function calculate() {
+        if (operation === null || previousInput === "") return
+
+        let result
+        const prev = parseFloat(previousInput)
+        const current = parseFloat(currentInput)
+
+        switch (operation) {
+          case "+":
+            result = prev + current
+            break
+          case "-":
+            result = prev - current
+            break
+          case "*":
+            result = prev * current
+            break
+          case "/":
+            if (current === 0) {
+              result = "Error"
+            } else {
+              result = prev / current
+            }
+            break
+        }
+
+        // 更新显示
+        currentExpression = `${previousInput} ${operation} ${currentInput} =`
+        currentInput = result.toString()
+        previousInput = ""
+        operation = null
+        updateDisplay()
+      }
+
+      // 更新显示
+      function updateDisplay() {
+        expressionDisplay.textContent = currentExpression
+        resultDisplay.textContent = currentInput
+      }
+
+      // 键盘支持
+      document.addEventListener("keydown", function (event) {
+        if (/[0-9]/.test(event.key)) {
+          appendNumber(event.key)
+        } else if (event.key === ".") {
+          appendDecimal()
+        } else if (event.key === "+") {
+          appendOperator("+")
+        } else if (event.key === "-") {
+          appendOperator("-")
+        } else if (event.key === "*") {
+          appendOperator("*")
+        } else if (event.key === "/") {
+          appendOperator("/")
+        } else if (event.key === "Enter" || event.key === "=") {
+          calculate()
+        } else if (event.key === "Escape") {
+          clearAll()
+        } else if (event.key === "Backspace") {
+          backspace()
+        } else if (event.key === "%") {
+          calculatePercentage()
+        }
+      })
+
+      // 初始化计算器
+      window.onload = init
+    </script>
+  </body>
+</html>
