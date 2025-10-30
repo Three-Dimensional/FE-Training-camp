@@ -857,7 +857,6 @@
                   this.fetchWeatherByCoords(latitude, longitude)
                 },
                 (error) => {
-                  console.error("获取位置失败:", error)
                   this.showError("无法获取您的位置信息")
                 }
               )
@@ -968,43 +967,92 @@
                   this.lifeSuggestions = this.processLifeSuggestions(result.suggestion)
                   // 强制Vue重新渲染
                   this.$forceUpdate()
+                } else {
+                  this.lifeSuggestions = this.getMockLifeSuggestions()
                 }
               } else {
+                this.lifeSuggestions = this.getMockLifeSuggestions()
               }
-            } catch (error) {}
+            } catch (error) {
+              this.lifeSuggestions = this.getMockLifeSuggestions()
+              this.$forceUpdate()
+            }
           },
 
           /**
            * 处理生活指数数据
            */
           processLifeSuggestions(suggestions) {
-            // suggestions是一个数组，需要遍历处理
-            if (!Array.isArray(suggestions) || suggestions.length === 0) {
+            // 检查数据结构：可能是对象而不是数组
+            if (!suggestions) {
               return this.getMockLifeSuggestions()
             }
 
-            // 定义需要显示的生活指数类型
-            const importantTypes = ["dressing", "car_washing", "flu", "sport", "uv", "comfort"]
+            // 首先尝试直接处理对象结构
+            let result = []
             
-            // 映射生活指数类型到显示信息
-            const typeMap = {
-              dressing: { label: "穿衣指数", icon: "fa-tshirt" },
-              car_washing: { label: "洗车指数", icon: "fa-car" },
-              flu: { label: "感冒指数", icon: "fa-head-side-cough" },
-              sport: { label: "运动指数", icon: "fa-running" },
-              uv: { label: "紫外线指数", icon: "fa-sun" },
-              comfort: { label: "舒适度指数", icon: "fa-smile" }
+            // 如果suggestions是对象，尝试提取其中的生活指数
+            if (typeof suggestions === 'object' && !Array.isArray(suggestions)) {
+              // 定义需要显示的生活指数类型
+              const importantTypes = ["dressing", "car_washing", "flu", "sport", "uv", "comfort"]
+              
+              // 映射生活指数类型到显示信息
+              const typeMap = {
+                dressing: { label: "穿衣指数", icon: "fa-tshirt" },
+                car_washing: { label: "洗车指数", icon: "fa-car" },
+                flu: { label: "感冒指数", icon: "fa-head-side-cough" },
+                sport: { label: "运动指数", icon: "fa-running" },
+                uv: { label: "紫外线指数", icon: "fa-sun" },
+                comfort: { label: "舒适度指数", icon: "fa-smile" }
+              }
+              
+              // 遍历对象的所有属性，查找生活指数数据
+              for (const [key, value] of Object.entries(suggestions)) {
+                // 如果属性名是生活指数类型
+                if (importantTypes.includes(key)) {
+                  result.push({
+                    label: typeMap[key]?.label || key,
+                    icon: typeMap[key]?.icon || "fa-info-circle",
+                    brief: value?.brief || value?.desc || value?.category || "暂无数据",
+                    details: value?.details || value?.info || value?.text || "数据加载中..."
+                  })
+                }
+                // 如果属性值是对象且包含生活指数数据
+                else if (value && typeof value === 'object' && value.name && importantTypes.includes(value.name)) {
+                  result.push({
+                    label: typeMap[value.name]?.label || value.name,
+                    icon: typeMap[value.name]?.icon || "fa-info-circle",
+                    brief: value.brief || value.desc || value.category || "暂无数据",
+                    details: value.details || value.info || value.text || "数据加载中..."
+                  })
+                }
+              }
             }
+            // 如果是数组结构，按原逻辑处理
+            else if (Array.isArray(suggestions)) {
+              // 定义需要显示的生活指数类型
+              const importantTypes = ["dressing", "car_washing", "flu", "sport", "uv", "comfort"]
+              
+              // 映射生活指数类型到显示信息
+              const typeMap = {
+                dressing: { label: "穿衣指数", icon: "fa-tshirt" },
+                car_washing: { label: "洗车指数", icon: "fa-car" },
+                flu: { label: "感冒指数", icon: "fa-head-side-cough" },
+                sport: { label: "运动指数", icon: "fa-running" },
+                uv: { label: "紫外线指数", icon: "fa-sun" },
+                comfort: { label: "舒适度指数", icon: "fa-smile" }
+              }
 
-            // 过滤出需要显示的生活指数
-            const result = suggestions
-              .filter(suggestion => importantTypes.includes(suggestion.name))
-              .map(suggestion => ({
-                label: typeMap[suggestion.name]?.label || suggestion.name,
-                icon: typeMap[suggestion.name]?.icon || "fa-info-circle",
-                brief: suggestion.brief || "暂无数据",
-                details: suggestion.details || "数据加载中..."
-              }))
+              // 过滤出需要显示的生活指数
+              result = suggestions
+                .filter(suggestion => suggestion && suggestion.name && importantTypes.includes(suggestion.name))
+                .map(suggestion => ({
+                  label: typeMap[suggestion.name]?.label || suggestion.name,
+                  icon: typeMap[suggestion.name]?.icon || "fa-info-circle",
+                  brief: suggestion.brief || suggestion.desc || suggestion.category || "暂无数据",
+                  details: suggestion.details || suggestion.info || suggestion.text || "数据加载中..."
+                }))
+            }
 
             // 如果API返回的数据为空，使用模拟数据
             if (result.length === 0) {
@@ -1018,7 +1066,44 @@
            * 获取模拟生活指数数据
            */
           getMockLifeSuggestions(cityName) {
-            return []
+            return [
+              {
+                label: "穿衣指数",
+                icon: "fa-tshirt",
+                brief: "建议穿着轻薄衣物",
+                details: "天气温暖，适合穿着短袖、薄外套等轻薄衣物"
+              },
+              {
+                label: "洗车指数",
+                icon: "fa-car",
+                brief: "适宜洗车",
+                details: "未来24小时无雨，适宜洗车"
+              },
+              {
+                label: "感冒指数",
+                icon: "fa-head-side-cough",
+                brief: "少发感冒",
+                details: "天气条件不易引发感冒，但请注意适当增减衣物"
+              },
+              {
+                label: "运动指数",
+                icon: "fa-running",
+                brief: "适宜运动",
+                details: "天气条件适宜户外运动"
+              },
+              {
+                label: "紫外线指数",
+                icon: "fa-sun",
+                brief: "中等强度",
+                details: "紫外线强度中等，外出时建议涂抹防晒霜"
+              },
+              {
+                label: "舒适度指数",
+                icon: "fa-smile",
+                brief: "舒适",
+                details: "天气条件舒适，适宜外出活动"
+              }
+            ]
           },
 
           /**
@@ -1205,7 +1290,6 @@
            * 统一错误处理方法
            */
           handleError(context, error) {
-            console.error(`${context}:`, error)
             this.showError("获取天气数据失败")
           },
 
