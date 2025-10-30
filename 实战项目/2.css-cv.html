@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>张三 - 前端开发工程师简历</title>
+  <style>
+    /* 基础重置 */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      background-color: #f7f9fc;
+      padding: 20px;
+    }
+    
+    /* 容器布局 */
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      background: 0 auto;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+    
+    /* 头部样式 */
+    header {
+      background: linear-gradient(135deg, #1e5799, #207cca);
+      color: white;
+      padding: 30px 40px;
+      text-align: center;
+    }
+    
+    .profile {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+    
+    .profile-img {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      border: 4px solid rgba(255,255,255,0.3);
+      background-color: #ddd;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 30px;
+      font-size: 40px;
+    }
+    
+    .name-title h1 {
+      font-size: 36px;
+      margin-bottom: 5px;
+    }
+    
+    .name-title h2 {
+      font-size: 22px;
+      font-weight: 400;
+    }
+    
+    .contact-info {
+      display: flex;
+      justify-content: center;
+      margin-top: 15px;
+      flex-wrap: wrap;
+    }
+    
+    .contact-item {
+      margin: 0 15px;
+      display: flex;
+      align-items: center;
+    }
+    
+    .contact-item i {
+      margin-right: 8px;
+    }
+    
+    /* 主要内容区域 */
+    .main-content {
+      display: flex;
+      padding: 30px;
+    }
+    
+    /* 左侧简历区域 */
+    .resume-section {
+      flex: 3;
+      padding-right: 30px;
+      border-right: 1px solid #eee;
+    }
+    
+    .section {
+      margin-bottom: 30px;
+    }
+    
+    .section-title {
+      font-size: 22px;
+      color: #1e5799;
+      border-bottom: 2px solid #1e5799;
+      padding-bottom: 8px;
+      margin-bottom: 15px;
+    }
+    
+    .section-content {
+      padding-left: 15px;
+    }
+    
+    .education-item, .experience-item {
+      margin-bottom: 20px;
+    }
+    
+    .education-item h3, .experience-item h3 {
+      font-size: 18px;
+      margin-bottom: 5px;
+    }
+    
+    .education-details, .experience-details {
+      color: #666;
+      margin-bottom: 8px;
+    }
+    
+ .skills {
+      display: flex;
+      flex-wrap: wrap;
+    }
+    
+    .skill-item {
+      background: #eef5ff;
+      padding: 8px 15px;
+      margin: 0 10px 10px 0 10px 10px 0;
+      border-radius: 20px;
+    }
+    
+    /* 右侧表单区域 */
+    .form-section {
+      flex: 2;
+      padding-left: 30px;
+    }
+    
+    .contact-form {
+      background: #f9fbfd;
+      padding: 25pxd;
+      padding: 25px;
+      border-radius: 8px;
+      border: 1px solid #e1e8ed;
+    }
+    
+    .form-title {
+      text-align: center;
+      font-size: 24px;
+      margin-bottom: 25px;
+      color: #1e5799;
+    }
+    
+    .form-group {
+      margin-bottom: 20px;
+    }
+    
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      color: #444;
+    }
+    
+    .form-group input,
+    .form-group textarea,
+    .formform-group textarea,
+    .form-group select {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 16px;
+    }
+    
+    .form-group input:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: #1e5799;
+      box-shadow: 0 0 0 2px rgba(30, 87, 153, 0.2);
+    }
+    
+    textarea {
+      height: 120px;
+      resize: vertical;
+    }
+    
+    .required::after {
+      content: " *";
+      color: #e74c3c;
+    }
+    
+    .error {
+      color: #e74c3c;
+      font-size: 14px;
+      margin-top: 5px;
+      display: none;
+    }
+    
+    .char-counter {
+      font-size: 12px;
+      color: #666;
+      text-align: right;
+      margin-top: 5px;
+    }
+    
+    .char-counter.warning {
+      color: #f39c12;
+    }
+    
+    .char-counter.error {
+      color: #e74c3c;
+    }
+    
+    button {
+      background: #1e5799;
+      color: white;
+      border: none;
+      padding: 12px 25px;
+      font-size: 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      width: 100%;
+      transition: background 0.3s;
+    }
+    
+    button:hover {
+      background: #16467e;
+    }
+    
+    /*e;
+    }
+    
+    /* 表单验证状态 */
+    .success input,
+    .success textsuccess input,
+    .success textarea,
+    .success select {
+      border-color: #27ae60;
+    }
+    
+    .error-field input,
+    .error-field textarea,
+    .error-field select {
+      border-color: #e74c3c;
+    }
+    
+    .error-field .error {
+      display: block;
+    }
+    
+    /* 页脚 */
+    footer {
+      text-align: center;
+      padding: 20px;
+      background: #2c3e50;
+      color: white;
+      font-size: 14px;
+    }
+    
+    /* 响应;
+    }
+    
+    /* 响应式设计 */
+    @media (max-width: 768px) {
+      .main-content {
+        flex-direction: column;
+      }
+      
+      .resume-section {
+        padding-right: 0;
+        border-right: none;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 30px;
+        margin-bottom: 30px;
+      }
+      
+      .form-section {
+        padding-left: 0;
+      }
+      
+      .profile {
+        flex-direction: column;
+        text-align: center;
+     ;
+        text-align: center;
+      }
+      
+      .profile-img {
+        margin-right: 0;
+        margin-bottom: 20px;
+      }
+      
+      .contact-info {
+        flex-direction: column;
+        align-items: center;
+      }
+      
+      .contact-item {
+        margin: 5px 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="profile">
+        <div class="profile-img">👤</div>
+        <div class="name-title">
+          <h1>张三</h1>
+          <h2>前端开发工程师</h22>前端开发工程师</h2>
+        </div>
+      </div>
+      <div class="contact-info">
+        <div class="contact-item">
+          <span>📧</span> <span>email@example.com</span>
+        </div>
+        <div class="contact-item">
+          <span>📱</span> <span>138-8888-8888</span>
+        </div>
+        <div class="contact-item">
+          <span>📍</span> <span>上海市浦东新区</span>
+        </div>
+      </div>
+    </header>
+    
+    <div class="main-content">
+      <!-- 左侧简历内容 -->
+      <div class="resume-section">
+        <div class="section">
+          <h3 class="section-title">教育背景</h3>
+          <div class="section-content">
+            <div class="education-item">
+            <div class="education-item">
+              <h3>XX大学 - 计算机科学与技术</h3>
+              <div class="education-details">
+                <strong>硕士 | 2023 - 2026</strong>
+              </div>
+              <p>主修课程：Web前端开发、数据结构与算法、人机交互设计</p>
+            </div>
+            <div class="education-item">
+              <h3>XX大学 - 软件工程</h3>
+              <div class="education-details">
+                <strong>学士 | 2019 - 2023</strong>
+              </div>
+              <p>主修课程：JavaScript高级程序设计、响应式网页设计、数据库系统</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="section">
+          <h3 class="section">
+          <h3 class="section-title">专业技能</h3>
+          <div class="section-content">
+            <div class="skills">
+              <div class="skill-item">HTML5 & CSS3</div">HTML5 & CSS3</div>
+              <div class="skill-item">JavaScript (ES6+)</div>
+              <div class="skill-item">Vue.js</div>
+              <div class="skill-item">响应式设计</div>
+              <div class="skill-item">Git版本控制</div>
+              <div class="skill-item">Node.js基础</div>
+              <div class="skill-item">UI/UX设计</div>
+              <div class设计</div>
+              <div class="skill-item">性能优化</div>
+            </div>
+          </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="section">
+          <h3 class="section-title">项目经验</h3>
+          <div class="section-content">
+            <div class="experience-item">
+              <h3="experience-item">
+              <h3>电商平台前端开发</h3>
+              <div class="experience-details">
+                <strong>2025.03 - 2025.06</strong>
+              </div>
+              <p>使用Vue.js开发响应式电商平台，实现商品展示、购物车和结算功能。</p>
+            </div>
+            <div class="experience-item">
+              <h3>企业官网重构</h3>
+              <div class="experience-details">
+                <strong>2024.09 - 2024.12</strong>
+              </div>
+              <p>重构企业官网，优化SEO和页面性能，提升网站访问速度40%。</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 右侧联系表单 -->
+      <div class="form-section">
+        <div class="contact-form">
+          <h3 class="form-title">联系我</h3>
+          <form id="contactForm">
+            <div class="form-group">
+              <label for="name" class="required">姓名</label>
+              <input type="text" id="name" placeholder="请输入您的姓名">
+              <div class="error" id="nameError">请输入有效的姓名</div>
+            </div>
+            
+            <div class="form-group">
+              <label for="email" class="required">电子邮箱</label>
+              <input type="email" id="email" placeholder="example@domain.com">
+              <div class="error" id="emailError">请输入有效的电子邮箱</div>
+            </div>
+            
+            <div class="form-group">
+              <label for="phone">联系电话</label>
+              <input type="tel" id="phone" placeholder="138-8888-8888">
+              <div class="error" id="phoneError">请输入有效的联系电话</div>
+            </div>
+            
+            <div class="form-group">
+              <label for="subject" class="required">主题</label>
+              <select id="subject">
+                <option value="">请选择主题</option>
+                <option value="job">工作机会</option>
+                <option value="project">项目合作</option>
+                <option value="consult">技术咨询</option>
+                <option value="other">其他</option>
+              </select>
+              <div class="error" id="subjectError">请选择主题</div>
+            </div>
+            
+            <div class="form-group">
+              <label for="message" class="required">留言内容</label>
+              <textarea id="message" placeholder="请输入您的留言内容..."></textarea>
+              <div class="char-counter" id="messageCounter">0/500</div>
+              <div class="error" id="messageError">留言内容不能少于10个字</div>
+            </div>
+            
+            <button type="submit">发送消息</button>
+          </form>
+        </div>
+      </div>
+    </div>
+    
+    <footer>
+      <p>© 2025 张三 - 前端开发工程师简历 | 本页面符合W3C标准</p>
+    </footerC标准</p>
+    </footer>
+  </div>
+
+  <script>
+    /**
+     * 表单验证工具类
+     * 负责表单字段的验证逻辑和状态管理
+     */
+    class FormValidator {
+      /**
+       * 构造函数 - 初始化验证规则和状态
+       */
+      constructor() {
+        // 定义表单字段的验证规则
+        this.validationRules = {
+          name: {
+            required: true,
+            minLength: 2,
+            maxLength: 50,
+            pattern: /^[\u4e00-\u9fa5a-zA-Z\s]+$/,
+            errorMessages: {
+              required: '姓名不能为空',
+              minLength: '姓名至少需要2个字符',
+              maxLength: '姓名不能超过50个字符',
+              pattern: '姓名只能包含中文、英文和空格'
+            }
+          },
+          email: {
+            required: true,
+            pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+            errorMessages: {
+              required: '邮箱不能为空',
+              pattern: '请输入有效的电子邮箱'
+            }
+          },
+          phone: {
+            required: false,
+            pattern: /^1[3-9]\d{9}$/,
+            errorMessages: {
+              pattern: '请输入有效的手机号码'
+            }
+          },
+          subject: {
+            required: true,
+            errorMessages: {
+              required: '请选择主题'
+            }
+          },
+          message: {
+            required: true,
+            minLength: 10,
+            maxLength: 500,
+            errorMessages: {
+              required: '留言内容不能为空',
+              minLength: '留言内容至少需要10个字符',
+              maxLength: '留言内容不能超过500个字符'
+            }
+          }
+        };
+        
+        this.isSubmitting = false;
+      }
+      
+      // 重置所有错误状态
+      resetErrors() {
+        const formGroups = document.querySelectorAll('.form-group');
+        formGroups.forEach(group => {
+          group.classList.remove('error-field', 'success');
+        });
+      }
+      
+      // 显示错误信息
+      showError(fieldId, message) {
+        const field = document.getElementById(fieldId);
+        const errorElement = document.getElementById(fieldId + 'Error');
+        
+        if (field && errorElement) {
+          errorElement.textContent = message;
+          field.parentElement.classList.add('error-field');
+          field.parentElement.classList.remove('success');
+        }
+      }
+      
+      // 显示成功状态
+      showSuccess(fieldId) {
+        const field = document.getElementById(fieldId);
+        if (field) {
+          field.parentElement.classList.remove('error-field');
+          field.parentElement.classList.add('success');
+        }
+      }
+      
+      // 验证单个字段
+      validateField(fieldId, value, isRealTime = false) {
+        const rules = this.validationRules[fieldId];
+        if (!rules) return true;
+        
+        const trimmedValue = value ? value.toString().trim() : '';
+        
+        // 非必填字段为空时直接通过
+        if (!rules.required && !trimmedValue) {
+          this.showSuccess(fieldId);
+          return true;
+        }
+        
+        // 实时验证时，如果字段为空且不是必填，不显示错误
+        if (isRealTime && !rules.required && !trimmedValue) {
+          this.clearFieldState(fieldId);
+          return true;
+        }
+        
+        // 检查必填字段
+        if (rules.required && !trimmedValue) {
+          this.showError(fieldId, rules.errorMessages.required);
+          return false;
+        }
+        
+        // 检查最小长度
+        if (rules.minLength && trimmedValue.length < rules.minLength) {
+          this.showError(fieldId, rules.errorMessages.minLength);
+          return false;
+        }
+        
+        // 检查最大长度
+        if (rules.maxLength && trimmedValue.length > rules.maxLength) {
+          this.showError(fieldId, rules.errorMessages.maxLength);
+          return false;
+        }
+        
+        // 检查正则表达式
+        if (rules.pattern && !rules.pattern.test(trimmedValue)) {
+          this.showError(fieldId, rules.errorMessages.pattern);
+          return false;
+        }
+        
+        // 验证通过
+        this.showSuccess(fieldId);
+        return true;
+      }
+      
+      // 清除字段状态
+      clearFieldState(fieldId) {
+        const field = document.getElementById(fieldId);
+        const errorElement = document.getElementById(fieldId + 'Error');
+        
+        if (field && errorElement) {
+          errorElement.textContent = '';
+          field.parentElement.classList.remove('error-field', 'success');
+        }
+      }
+      
+      // 验证整个表单
+      validateForm(formData) {
+        this.resetErrors();
+        let isValid = true;
+        
+        for (const [fieldId, value] of Object.entries(formData)) {
+          if (!this.validateField(fieldId, value)) {
+            isValid = false;
+          }
+        }
+        
+        return isValid;
+      }
+      
+      // 获取表单数据
+      getFormData() {
+        return {
+          name: document.getElementById('name').value,
+          email: document.getElementById('email').value,
+          phone: document.getElementById('phone').value,
+          subject: document.getElementById('subject').value,
+          message: document.getElementById('message').value
+        };
+      }
+    }
+    
+    /**
+     * 表单提交处理器
+     * 负责表单事件绑定、提交处理和用户体验优化
+     */
+    class FormHandler {
+      /**
+       * 构造函数
+       * @param {FormValidator} validator - 表单验证器实例
+       */
+      constructor(validator) {
+        this.validator = validator;
+        this.init();
+      }
+      
+      init() {
+        this.bindEvents();
+        this.restoreFormData();
+      }
+      
+      bindEvents() {
+        const form = document.getElementById('contactForm');
+        
+        // 表单提交事件
+        form.addEventListener('submit', (e) => this.handleSubmit(e));
+        
+        // 实时验证事件
+        const inputs = form.querySelectorAll('input, textarea, select');
+        inputs.forEach(input => {
+          input.addEventListener('input', () => this.handleRealTimeValidation(input));
+          input.addEventListener('blur', () => this.handleRealTimeValidation(input));
+        });
+      }
+      
+      handleSubmit(e) {
+        e.preventDefault();
+        
+        // 防止重复提交
+        if (this.validator.isSubmitting) {
+          return;
+        }
+        
+        this.validator.isSubmitting = true;
+        
+        const formData = this.validator.getFormData();
+        
+        if (this.validator.validateForm(formData)) {
+          this.submitForm(formData);
+        } else {
+          this.validator.isSubmitting = false;
+        }
+      }
+      
+      handleRealTimeValidation(input) {
+        const fieldId = input.id;
+        const value = input.value;
+        this.validator.validateField(fieldId, value, true);
+        
+        // 更新字符计数器
+        this.updateCharCounter(fieldId, value);
+        
+        // 保存到本地存储
+        this.saveFormData();
+      }
+      
+      // 更新字符计数器
+      updateCharCounter(fieldId, value) {
+        if (fieldId === 'message') {
+          const counter = document.getElementById('messageCounter');
+          if (counter) {
+            const length = value ? value.length : 0;
+            const maxLength = 500;
+            counter.textContent = `${length}/${maxLength}`;
+            
+            // 根据字符数量设置样式
+            counter.className = 'char-counter';
+            if (length > maxLength * 0.8) {
+              counter.classList.add('warning');
+            }
+            if (length > maxLength) {
+              counter.classList.add('error');
+            }
+          }
+        }
+      }
+      
+      submitForm(formData) {
+        // 模拟表单提交
+        const submitButton = document.querySelector('#contactForm button[type="submit"]');
+        const originalText = submitButton.textContent;
+        
+        // 显示加载状态
+        this.setButtonLoading(submitButton, true);
+        
+        // 模拟网络请求延迟
+        setTimeout(() => {
+          try {
+            // 模拟可能的网络错误（10%概率）
+            if (Math.random() < 0.1) {
+              throw new Error('网络连接失败，请稍后重试');
+            }
+            
+            // 显示成功消息
+            this.showSuccessMessage();
+            
+            // 重置表单
+            document.getElementById('contactForm').reset();
+            
+            // 重置字符计数器
+            this.updateCharCounter('message', '');
+            
+            // 清除本地存储
+            localStorage.removeItem('contactFormData');
+            
+            // 重置所有字段状态
+            this.validator.resetErrors();
+            
+          } catch (error) {
+            // 显示错误消息
+            this.showErrorMessage(error.message);
+          } finally {
+            // 恢复按钮状态
+            this.setButtonLoading(submitButton, false);
+            this.validator.isSubmitting = false;
+          }
+        }, 1500);
+      }
+      
+      // 设置按钮加载状态
+      setButtonLoading(button, isLoading) {
+        if (isLoading) {
+          button.innerHTML = '<span class="loading-spinner"></span> 提交中...';
+          button.disabled = true;
+          button.style.opacity = '0.7';
+        } else {
+          button.innerHTML = '发送消息';
+          button.disabled = false;
+          button.style.opacity = '1';
+        }
+      }
+      
+      showSuccessMessage() {
+        // 创建自定义成功提示
+        const successDiv = document.createElement('div');
+        successDiv.className = 'form-message';
+        successDiv.innerHTML = `
+          <div class="message-content success">
+            ✅ 表单提交成功！感谢您的留言。
+          </div>
+        `;
+        
+        document.body.appendChild(successDiv);
+        
+        // 3秒后自动移除
+        setTimeout(() => {
+          successDiv.remove();
+        }, 3000);
+      }
+      
+      showErrorMessage(message) {
+        // 创建自定义错误提示
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'form-message';
+        errorDiv.innerHTML = `
+          <div class="message-content error">
+            ❌ ${message}
+          </div>
+        `;
+        
+        document.body.appendChild(errorDiv);
+        
+        // 5秒后自动移除
+        setTimeout(() => {
+          errorDiv.remove();
+        }, 5000);
+      }
+      
+      // 保存表单数据到本地存储
+      saveFormData() {
+        const formData = this.validator.getFormData();
+        const storageData = {
+          data: formData,
+          timestamp: Date.now(),
+          version: '1.0'
+        };
+        localStorage.setItem('contactFormData', JSON.stringify(storageData));
+      }
+      
+      // 从本地存储恢复表单数据
+      restoreFormData() {
+        try {
+          const savedData = localStorage.getItem('contactFormData');
+          if (savedData) {
+            const storageData = JSON.parse(savedData);
+            
+            // 检查数据是否过期（24小时）
+            const isExpired = Date.now() - storageData.timestamp > 24 * 60 * 60 * 1000;
+            
+            if (!isExpired) {
+              Object.entries(storageData.data).forEach(([fieldId, value]) => {
+                const field = document.getElementById(fieldId);
+                if (field) {
+                  field.value = value;
+                  // 触发实时验证以更新状态
+                  this.handleRealTimeValidation(field);
+                }
+              });
+              
+              // 显示数据恢复提示
+              this.showInfoMessage('已恢复上次未提交的表单数据');
+            } else {
+              // 清除过期数据
+              localStorage.removeItem('contactFormData');
+            }
+          }
+        } catch (error) {
+          console.warn('恢复表单数据失败:', error);
+          // 清除损坏的数据
+          localStorage.removeItem('contactFormData');
+        }
+      }
+      
+      // 清除本地存储数据
+      clearStoredData() {
+        localStorage.removeItem('contactFormData');
+      }
+      
+      // 显示信息提示
+      showInfoMessage(message) {
+        const infoDiv = document.createElement('div');
+        infoDiv.className = 'form-message';
+        infoDiv.innerHTML = `
+          <div class="message-content info">
+            ℹ️ ${message}
+          </div>
+        `;
+        
+        document.body.appendChild(infoDiv);
+        
+        // 3秒后自动移除
+        setTimeout(() => {
+          infoDiv.remove();
+        }, 3000);
+      }
+    }
+    
+    /**
+      * 应用初始化
+      * 在DOM加载完成后初始化表单验证和处理器
+      */
+     document.addEventListener('DOMContentLoaded', function() {
+       // 创建验证器和处理器实例
+       const validator = new FormValidator();
+       const formHandler = new FormHandler(validator);
+       
+       // 添加动态CSS样式
+       const style = document.createElement('style');
+       style.textContent = `
+         @keyframes slideIn {
+           from {
+             transform: translateX(100%);
+             opacity: 0;
+           }
+           to {
+             transform: translateX(0);
+             opacity: 1;
+           }
+         }
+         
+         .form-group.success input,
+         .form-group.success textarea,
+         .form-group.success select {
+           border-color: #27ae60 !important;
+           box-shadow: 0 0 0 2px rgba(39, 174, 96, 0.2) !important;
+         }
+         
+         .form-message {
+           position: fixed;
+           top: 20px;
+           right: 20px;
+           z-index: 1000;
+           animation: slideIn 0.3s ease-out;
+         }
+         
+         .message-content {
+           padding: 15px 20px;
+           border-radius: 4px;
+           box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+           color: white;
+           font-weight: 500;
+         }
+         
+         .message-content.success {
+           background: #27ae60;
+         }
+         
+         .message-content.error {
+           background: #e74c3c;
+         }
+         
+         . height: 16px;
+           border: 2px solid #ffffff;
+           border-radius: 50%;
+           border-top-color: transparent;
+           animation: spin 1s linear infinite;
+           margin-right: 8px;
+         }
+         
+         @keyframes spin {
+           to {
+             transform: rotate(360deg);
+           }
+         }
+       `;
+       document.head.appendChild(style);
+    });
+  </script>
+</body>
+</html>
