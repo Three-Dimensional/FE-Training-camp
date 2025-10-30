@@ -4,6 +4,11 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>全球天气查询</title>
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23fff'/><text x='50' y='70' font-family='Arial' font-size='60' text-anchor='middle' fill='%23000'>⭐️</text></svg>" />
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -352,16 +357,14 @@
         }
 
         .location-btn {
-          position .location-btn {
-            position: static;
-            transform: none;
-            margin-top: 15px;
-            align-self: center;
-          }
+          position: static;
+          transform: none;
+          margin-top: 15px;
+          align-self: center;
+        }
 
-          .charts-container {
-            grid-template-columns: 1fr;
-          }
+        .charts-container {
+          grid-template-columns: 1fr;
         }
       }
 
@@ -452,26 +455,7 @@
         font-size: 1rem;
       }
 
-      /* 改进的天气详情布局 */
-      .weather-details {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 20px;
-        max-width: 600px;
-      }
-
-      .detail-item {
-        background: rgba(255, 255, 255, 0.1);
-        border-radius: 12px;
-        padding: 20px;
-        text-align: center;
-        transition: all 0.3s ease;
-      }
-
-      .detail-item:hover {
-        background: rgba(255, 255, 255, 0.15);
-        transform: translateY(-2px);
-      }
+      /* 改进的天气详情布局 - 已在前文定义，此处移除重复定义 */
 
       /* 响应式调整 */
       @media (max-width: 768px) {
@@ -551,35 +535,10 @@
           </div>
 
           <div class="weather-details">
-            <div class="detail-item">
-              <i class="fas fa-wind"></i>
-              <div class="detail-value">{{ currentWeather ? currentWeather.windSpeed : '--' }}</div>
-              <div class="detail-label">风力</div>
-            </div>
-            <div class="detail-item">
-              <i class="fas fa-tint"></i>
-              <div class="detail-value">{{ currentWeather ? currentWeather.humidity + '%' : '--' }}</div>
-              <div class="detail-label">湿度</div>
-            </div>
-            <div class="detail-item">
-              <i class="fas fa-compass"></i>
-              <div class="detail-value">{{ currentWeather ? currentWeather.windDirection : '--' }}</div>
-              <div class="detail-label">风向</div>
-            </div>
-            <div class="detail-item">
-              <i class="fas fa-thermometer-half"></i>
-              <div class="detail-value">{{ currentWeather ? currentWeather.feelsLike + '°C' : '--' }}</div>
-              <div class="detail-label">体感温度</div>
-            </div>
-            <div class="detail-item">
-              <i class="fas fa-eye"></i>
-              <div class="detail-value">{{ currentWeather ? currentWeather.visibility + 'km' : '--' }}</div>
-              <div class="detail-label">能见度</div>
-            </div>
-            <div class="detail-item">
-              <i class="fas fa-clock"></i>
-              <div class="detail-value">{{ currentWeather ? currentWeather.reportTime : '--' }}</div>
-              <div class="detail-label">更新时间</div>
+            <div class="detail-item" v-for="(detail, index) in weatherDetails" :key="index">
+              <i :class="'fas ' + detail.icon"></i>
+              <div class="detail-value">{{ detail.value || '--' }}{{ detail.suffix }}</div>
+              <div class="detail-label">{{ detail.label }}</div>
             </div>
           </div>
         </div>
@@ -591,28 +550,28 @@
             4天天气预报
           </h2>
           <div class="forecast-container">
-            <div class="forecast-card" v-for="(day, index) in forecastData.slice(0, 4)" :key="index">
-              <div class="forecast-date">{{ formatDate(day.fxDate) }}</div>
+            <div class="forecast-card" v-for="(day, index) in forecastData" :key="index">
+              <div class="forecast-date">{{ formatDate(day.date) }}</div>
               <div class="forecast-details">
                 <div class="forecast-period">
                   <div class="period-title">白天</div>
                   <div class="forecast-icon">
-                    <img :src="'https://a.hecdn.net/img/common/icon/202106d/' + day.iconDay + '.png'" :alt="day.textDay" />
+                    <img :src="'https://a.hecdn.net/img/common/icon/202106d/' + getWeatherIconCode(day.dayweather) + '.png'" :alt="day.dayweather" />
                   </div>
-                  <div class="forecast-temp">{{ day.tempMax }}°C</div>
-                  <div class="forecast-desc">{{ day.textDay }}</div>
+                  <div class="forecast-temp">{{ day.daytemp }}°C</div>
+                  <div class="forecast-desc">{{ day.dayweather }}</div>
                 </div>
                 <div class="forecast-period">
                   <div class="period-title">夜间</div>
                   <div class="forecast-icon">
-                    <img :src="'https://a.hecdn.net/img/common/icon/202106d/' + day.iconNight + '.png'" :alt="day.textNight" />
+                    <img :src="'https://a.hecdn.net/img/common/icon/202106d/' + getWeatherIconCode(day.nightweather) + '.png'" :alt="day.nightweather" />
                   </div>
-                  <div class="forecast-temp">{{ day.tempMin }}°C</div>
-                  <div class="forecast-desc">{{ day.textNight }}</div>
+                  <div class="forecast-temp">{{ day.nighttemp }}°C</div>
+                  <div class="forecast-desc">{{ day.nightweather }}</div>
                 </div>
               </div>
               <div class="forecast-summary">
-                <div class="temp-range">{{ day.tempMin }}°C ~ {{ day.tempMax }}°C</div>
+                <div class="temp-range">{{ day.nighttemp }}°C ~ {{ day.daytemp }}°C</div>
                 <div class="wind-info">{{ day.daywind || '--' }} {{ day.daypower || '--' }}</div>
               </div>
             </div>
@@ -637,18 +596,7 @@
             </div>
           </div>
 
-          <div class="chart-card">
-            <h2 class="section-title">
-              <i class="fas fa-tint"></i>
-              降水量
-            </h2>
-            <div class="chart-container">
-              <canvas id="precipChart"></canvas>
-              <div v-if="chartData.labels.length === 0" class="chart-placeholder">
-                <p>降水数据加载中...</p>
-              </div>
-            </div>
-          </div>
+
         </div>
       </div>
 
@@ -696,12 +644,10 @@
           chartData: {
             labels: [],
             temps: [],
-            precip: [],
           },
 
           // 图表实例
           tempChart: null,
-          precipChart: null,
         },
         computed: {
           /**
@@ -711,6 +657,52 @@
             if (!this.currentWeather) return ""
             return `https://a.hecdn.net/img/common/icon/202106d/${this.currentWeather.icon}.png`
           },
+
+          /**
+           * 天气详情数据
+           */
+          weatherDetails() {
+            if (!this.currentWeather) return []
+            
+            return [
+              {
+                icon: "fa-wind",
+                value: this.currentWeather.windSpeed,
+                label: "风力",
+                suffix: ""
+              },
+              {
+                icon: "fa-tint",
+                value: this.currentWeather.humidity,
+                label: "湿度",
+                suffix: "%"
+              },
+              {
+                icon: "fa-compass",
+                value: this.currentWeather.windDirection,
+                label: "风向",
+                suffix: ""
+              },
+              {
+                icon: "fa-thermometer-half",
+                value: this.currentWeather.feelsLike,
+                label: "体感温度",
+                suffix: "°C"
+              },
+              {
+                icon: "fa-eye",
+                value: this.currentWeather.visibility,
+                label: "能见度",
+                suffix: "km"
+              },
+              {
+                icon: "fa-clock",
+                value: this.currentWeather.reportTime,
+                label: "更新时间",
+                suffix: ""
+              }
+            ]
+          }
         },
         methods: {
           /**
@@ -761,8 +753,7 @@
               const geoData = await geoResponse.json()
 
               if (geoData.status === "1" && geoData.regeocode) {
-                const city = geoData.regeocode.addressComponent.city || 
-                           geoData.regeocode.addressComponent.province
+                const city = geoData.regeocode.addressComponent.city || geoData.regeocode.addressComponent.province
                 if (city) {
                   await this.fetchWeatherDataByCity(city)
                 } else {
@@ -772,8 +763,7 @@
                 this.showError("无法获取该位置的天气信息")
               }
             } catch (error) {
-              console.error("获取天气失败:", error)
-              this.showError("获取天气数据失败")
+              this.handleError("获取天气失败", error)
             }
           },
 
@@ -785,8 +775,7 @@
               // 高德天气API直接使用城市名称查询
               await this.fetchWeatherDataByCity(city)
             } catch (error) {
-              console.error("获取天气失败:", error)
-              this.showError("获取天气数据失败")
+              this.handleError("获取天气失败", error)
             }
           },
 
@@ -803,13 +792,11 @@
                 this.displayCurrentWeather(currentData, cityName)
                 // 获取天气预报
                 await this.fetchWeatherForecast(cityName)
-                this.updateBackground()
               } else {
                 this.showError("城市名称无效或未找到")
               }
             } catch (error) {
-              console.error("获取天气失败:", error)
-              this.showError("获取天气数据失败")
+              this.handleError("获取天气失败", error)
             }
           },
 
@@ -823,24 +810,12 @@
 
               if (data.status === "1" && data.forecasts.length > 0) {
                 const forecastData = data.forecasts[0]
-                // 转换高德API格式为应用需要的格式
-                this.forecastData = forecastData.casts.slice(0, 4).map(cast => ({
-                  fxDate: cast.date, // 日期
-                  tempMax: cast.daytemp, // 最高温度
-                  tempMin: cast.nighttemp, // 最低温度
-                  textDay: cast.dayweather, // 白天天气
-                  textNight: cast.nightweather, // 夜间天气
-                  iconDay: this.getWeatherIconCode(cast.dayweather), // 白天图标
-                  iconNight: this.getWeatherIconCode(cast.nightweather), // 夜间图标
-                  daywind: cast.daywind, // 白天风向
-                  daypower: cast.daypower, // 白天风力
-                  nightwind: cast.nightwind, // 夜间风向
-                  nightpower: cast.nightpower // 夜间风力
-                }))
+                // 直接使用高德API数据格式，减少转换步骤
+                this.forecastData = forecastData.casts.slice(0, 4)
                 this.prepareChartData(data)
               }
             } catch (error) {
-              console.error("获取预报失败:", error)
+              this.handleError("获取预报失败", error)
             }
           },
 
@@ -853,21 +828,24 @@
               const liveData = data.lives[0]
               this.currentWeather = {
                 temp: liveData.temperature, // 温度
-                text: liveData.weather,     // 天气状况
+                text: liveData.weather, // 天气状况
                 icon: this.getWeatherIconCode(liveData.weather), // 天气图标代码
                 windSpeed: liveData.windpower, // 风力
-                windDirection: liveData.winddirection || '--', // 风向
-                humidity: liveData.humidity,   // 湿度
+                windDirection: liveData.winddirection || "--", // 风向
+                humidity: liveData.humidity, // 湿度
                 reportTime: this.formatReportTime(liveData.reporttime), // 报告时间
                 feelsLike: this.calculateFeelsLike(liveData.temperature, liveData.humidity), // 体感温度
-                visibility: liveData.visibility || '--' // 能见度
+                visibility: liveData.visibility || "--", // 能见度
               }
               this.currentLocation = cityName
               this.updateTime = new Date().toLocaleString("zh-CN")
               this.errorMessage = ""
+              
+              // 更新背景样式
+              this.updateBackground()
             }
           },
-          
+
           /**
            * 根据天气状况获取图标代码（高德API适配）
            */
@@ -881,33 +859,33 @@
             if (weather.includes("雾")) return "501"
             return "999" // 默认
           },
-          
+
           /**
            * 格式化报告时间
            */
           formatReportTime(reportTime) {
-            if (!reportTime) return '--'
+            if (!reportTime) return "--"
             try {
               const date = new Date(reportTime)
-              return date.toLocaleString("zh-CN", { 
-                month: '2-digit', 
-                day: '2-digit', 
-                hour: '2-digit', 
-                minute: '2-digit' 
+              return date.toLocaleString("zh-CN", {
+                month: "2-digit",
+                day: "2-digit",
+                hour: "2-digit",
+                minute: "2-digit",
               })
             } catch {
               return reportTime
             }
           },
-          
+
           /**
            * 计算体感温度（简化算法）
            */
           calculateFeelsLike(temp, humidity) {
-            if (!temp || !humidity) return '--'
+            if (!temp || !humidity) return "--"
             const temperature = parseInt(temp)
             const hum = parseInt(humidity)
-            
+
             // 简化的体感温度计算
             if (temperature >= 27) {
               // 高温高湿时体感温度更高
@@ -923,26 +901,19 @@
            * 准备图表数据（高德API适配）
            */
           prepareChartData(data) {
-            const labels = []
-            const temps = []
-            const precip = []
-
-            // 高德API提供4天预报数据（今天+未来3天）
+            // 简化图表数据准备，只保留温度图表
             if (data.forecasts && data.forecasts.length > 0) {
               const forecastData = data.forecasts[0]
-              forecastData.casts.slice(0, 4).forEach((cast) => {
-                const date = new Date(cast.date)
-                labels.push(date.toLocaleDateString("zh-CN", { month: "short", day: "numeric" }))
-                // 计算平均温度（高德API没有平均温度，使用白天和夜间温度的平均值）
-                const avgTemp = Math.round((parseInt(cast.daytemp) + parseInt(cast.nighttemp)) / 2)
-                temps.push(avgTemp)
-                // 高德API没有降水量数据，设置为0
-                precip.push(0)
-              })
+              this.chartData = {
+                labels: forecastData.casts.slice(0, 4).map(cast => 
+                  new Date(cast.date).toLocaleDateString("zh-CN", { month: "short", day: "numeric" })
+                ),
+                temps: forecastData.casts.slice(0, 4).map(cast => 
+                  Math.round((parseInt(cast.daytemp) + parseInt(cast.nighttemp)) / 2)
+                )
+              }
+              this.createCharts()
             }
-
-            this.chartData = { labels, temps, precip }
-            this.createCharts()
           },
 
           /**
@@ -997,50 +968,6 @@
                   },
                 })
               }
-
-              // 降水图表
-              if (this.precipChart) {
-                this.precipChart.destroy()
-              }
-
-              const precipCtx = document.getElementById("precipChart")
-              if (precipCtx) {
-                this.precipChart = new Chart(precipCtx.getContext("2d"), {
-                  type: "bar",
-                  data: {
-                    labels: this.chartData.labels,
-                    datasets: [
-                      {
-                        label: "降水量 (mm)",
-                        data: this.chartData.precip,
-                        backgroundColor: "rgba(86, 204, 242, 0.7)",
-                        borderColor: "#56CCF2",
-                        borderWidth: 1,
-                      },
-                    ],
-                  },
-                  options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                      legend: {
-                        labels: { color: "rgba(255, 255, 255, 0.8)" },
-                      },
-                    },
-                    scales: {
-                      y: {
-                        beginAtZero: true,
-                        grid: { color: "rgba(255, 255, 255, 0.1)" },
-                        ticks: { color: "rgba(255, 255, 255, 0.7)" },
-                      },
-                      x: {
-                        grid: { color: "rgba(255, 255, 255, 0.1)" },
-                        ticks: { color: "rgba(255, 255, 255, 0.7)" },
-                      },
-                    },
-                  },
-                })
-              }
             })
           },
 
@@ -1074,6 +1001,14 @@
           formatDate(dateString) {
             const date = new Date(dateString)
             return date.toLocaleDateString("zh-CN", { month: "short", day: "numeric" })
+          },
+
+          /**
+           * 统一错误处理方法
+           */
+          handleError(context, error) {
+            console.error(`${context}:`, error)
+            this.showError("获取天气数据失败")
           },
 
           /**
