@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>现代简约计算器</title>
+    <title>JS简约计算器</title>
     <link 
       rel="icon" 
       type="image/svg+xml" 
@@ -22,7 +22,7 @@
         justify-content: center;
         align-items: center;
         min-height: 100vh;
-        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        background: #f8fafc;
         padding: 20px;
         color: #1f2937;
       }
@@ -31,17 +31,16 @@
         width: 100%;
         max-width: 380px;
         background: #fafbfc;
-        border-radius: 24px;
+        border-radius: 16px;
         box-shadow: 
           0 20px 40px rgba(0, 0, 0, 0.08),
           0 0 0 1px rgba(0, 0, 0, 0.02);
         overflow: hidden;
         backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.8);
       }
 
       .header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: #667eea;
         padding: 20px 24px;
         text-align: center;
         border-bottom: 1px solid rgba(255, 255, 255, 0.1);
@@ -126,27 +125,11 @@
           0 1px 0 rgba(255, 255, 255, 0.8) inset;
       }
 
-      .btn::before {
-        content: "";
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0.2) 100%);
-        opacity: 0;
-        transition: opacity 0.2s ease;
-      }
-
       .btn:hover {
         transform: translateY(-2px);
         box-shadow: 
           0 8px 16px rgba(0, 0, 0, 0.1),
           0 1px 0 rgba(255, 255, 255, 0.8) inset;
-      }
-
-      .btn:hover::before {
-        opacity: 1;
       }
 
       .btn:active {
@@ -168,13 +151,13 @@
       }
 
       .operator {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: #667eea;
         color: white;
         font-size: 1.5rem;
       }
 
       .operator:hover {
-        background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+        background: #5a67d8;
       }
 
       .function {
@@ -190,24 +173,25 @@
       }
 
       .equals {
-        background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+        background: linear-gradient(135deg, #292b2a 0%, #8bb3cb 100%);
         color: white;
         font-size: 1.8rem;
         font-weight: 600;
       }
 
       .equals:hover {
-        background: linear-gradient(135deg, #38a169 0%, #2f855a 100%);
+        background: linear-gradient(135deg, #292b2a 0%, #8bb3cb 100%);
+
       }
 
       .clear {
-        background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+        background: #f56565;
         color: white;
         font-weight: 600;
       }
 
       .clear:hover {
-        background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%);
+        background: #e53e3e;
       }
 
 
@@ -254,7 +238,7 @@
   <body>
     <div class="calculator-container">
       <div class="header">
-        <div class="title">现代计算器</div>
+        <div class="title">JS 简单计算器</div>
       </div>
 
       <div class="display">
@@ -286,7 +270,7 @@
         <button class="btn number" onclick="appendNumber('0')" style="grid-column: span 2;">0</button>
         <button class="btn function" onclick="appendDecimal()">.</button>
         <button class="btn function" onclick="calculatePercentage()">%</button>
-        <button class="btn equals" onclick="calculate()">=</button>
+        <button class="btn equals" onclick="calculate()" style="grid-column: span 4;">=</button>
       </div>
         </div>
       </div>
