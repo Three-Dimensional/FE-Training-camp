@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>班级缴费统计系统</title>
+    <!-- 引入Element UI样式 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/element-ui@2.15.13/lib/theme-chalk/index.css">
+    <!-- 引入Vue 2 -->
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.7.14/dist/vue.js"></script>
+    <!-- 引入Element UI组件 -->
+    <script src="https://cdn.jsdelivr.net/npm/element-ui@2.15.13/lib/index.js"></script>
+    <!-- 自定义样式 -->
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #f5f7fa;
+            padding: 20px;
+        }
+
+        .app-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* 统计卡片样式 */
+        .stats-row {
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            height: 120px;
+            padding: 15px;
+            border-radius: 8px;
+            background-color: #fff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .stat-content {
+            display: flex;
+            align-items: center;
+            height: 100%;
+        }
+
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: #fff;
+            margin-right: 15px;
+        }
+
+        /* 总应收（蓝色） */
+        .receivable .stat-icon {
+            background-color: #409EFF;
+        }
+
+        /* 总实收（绿色） */
+        .paid .stat-icon {
+            background-color: #67C23A;
+        }
+
+        /* 总欠费（红色） */
+        .arrears .stat-icon {
+            background-color: #F56C6C;
+        }
+
+        .stat-info {
+            flex: 1;
+        }
+
+        .stat-value {
+            font-size: 22px;
+            font-weight: 700;
+            color: #1f2d3d;
+            margin-bottom: 5px;
+        }
+
+        .stat-desc {
+            font-size: 14px;
+            color: #909399;
+        }
+
+        /* 筛选栏样式 */
+        .filter-bar {
+            background-color: #fff;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+
+        .filter-form {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .filter-form .el-form-item {
+            margin-bottom: 0;
+        }
+
+        /* 表格样式 */
+        .class-table {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .el-table__empty-block {
+            min-height: 200px;
+        }
+
+        .el-table__empty-text {
+            color: #909399;
+            font-size: 14px;
+        }
+
+        /* 响应式调整 */
+        @media (max-width: 1200px) {
+            .stats-row .el-col {
+                margin-bottom: 20px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .filter-form {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app" class="app-container">
+        <!-- 统计卡片区域 -->
+        <el-row class="stats-row" :gutter="20">
+            <!-- 总应收金额 -->
+            <el-col :span="8">
+                <div class="stat-card receivable">
+                    <div class="stat-content">
+                        <div class="stat-icon">
+                            <i class="el-icon-document"></i> <!-- 文档图标（对应应收） -->
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-value">{{ totalReceivable | currency }}</div>
+                            <div class="stat-desc">共{{ totalStudents }}名学生</div>
+                        </div>
+                    </div>
+                </div>
+            </el-col>
+
+            <!-- 总实收金额 -->
+            <el-col :span="8">
+                <div class="stat-card paid">
+                    <div class="stat-content">
+                        <div class="stat-icon">
+                            <i class="el-icon-check"></i> <!-- 对勾图标（对应实收） -->
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-value">{{ totalPaid | currency }}</div>
+                            <div class="stat-desc">已缴费率: {{ paidRate }}%</div>
+                        </div>
+                    </div>
+                </div>
+            </el-col>
+
+            <!-- 总欠费金额 -->
+            <el-col :span="8">
+                <div class="stat-card arrears">
+                    <div class="stat-content">
+                        <div class="stat-icon">
+                            <i class="el-icon-warning"></i> <!-- 警告图标（对应欠费） -->
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-value">{{ totalArrears | currency }}</div>
+                            <div class="stat-desc">共{{ totalArrearsStudents }}名学生欠费</div>
+                        </div>
+                    </div>
+                </div>
+            </el-col>
+        </el-row>
+
+        <!-- 筛选区域 -->
+        <div class="filter-bar">
+            <el-form class="filter-form" :inline="true">
+                <!-- 年份选择 -->
+                <el-form-item label="年份">
+                    <el-select v-model="filter.year" placeholder="请选择年份" style="width: 120px;">
+                        <el-option label="2025年" value="2025"></el-option>
+                        <el-option label="2024年" value="2024"></el-option>
+                        <el-option label="2023年" value="2023"></el-option>
+                    </el-select>
+                </el-form-item>
+
+                <!-- 系部选择 -->
+                <el-form-item label="系部">
+                    <el-select v-model="filter.department" placeholder="所有系部" style="width: 180px;">
+                        <el-option label="所有系部" value=""></el-option>
+                        <el-option label="计算机系" value="计算机系"></el-option>
+                        <el-option label="电子系" value="电子系"></el-option>
+                        <el-option label="机械系" value="机械系"></el-option>
+                        <el-option label="土木系" value="土木系"></el-option>
+                    </el-select>
+                </el-form-item>
+
+                <!-- 搜索框 -->
+                <el-form-item style="flex: 1;">
+                    <el-input 
+                        v-model="filter.keyword" 
+                        placeholder="搜索班级、专业或系部..." 
+                        prefix-icon="el-icon-search"
+                        style="width: 100%;"
+                    ></el-input>
+                </el-form-item>
+
+                <!-- 刷新按钮 -->
+                <el-form-item>
+                    <el-button type="primary" icon="el-icon-refresh" @click="refreshData">刷新数据</el-button>
+                </el-form-item>
+            </el-form>
+        </div>
+
+        <!-- 班级缴费统计表格 -->
+        <el-table 
+            :data="filteredClasses" 
+            class="class-table" 
+            border 
+            stripe 
+            empty-text="没有找到匹配的班级统计记录"
+        >
+            <el-table-column prop="className" label="班级名称" min-width="150"></el-table-column>
+            <el-table-column prop="department" label="所属系部" min-width="120"></el-table-column>
+            <el-table-column prop="major" label="专业" min-width="120"></el-table-column>
+            <el-table-column prop="totalStudents" label="学生总数" align="center" width="100"></el-table-column>
+            <el-table-column prop="receivable" label="总应收" align="right" width="120">
+                <template slot-scope="scope">{{ scope.row.receivable | currency }}</template>
+            </el-table-column>
+            <el-table-column prop="paid" label="总实收" align="right" width="120">
+                <template slot-scope="scope">{{ scope.row.paid | currency }}</template>
+            </el-table-column>
+            <el-table-column prop="arrears" label="总欠费" align="right" width="120">
+                <template slot-scope="scope">{{ scope.row.arrears | currency }}</template>
+            </el-table-column>
+            <el-table-column prop="paidCount" label="已缴费人数" align="center" width="120"></el-table-column>
+            <el-table-column prop="partialCount" label="部分缴费人数" align="center" width="140"></el-table-column>
+            <el-table-column prop="unpaidCount" label="未缴费人数" align="center" width="120"></el-table-column>
+            <el-table-column label="操作" align="center" width="100">
+                <template slot-scope="scope">
+                    <el-button 
+                        size="small" 
+                        type="primary" 
+                        icon="el-icon-view" 
+                        @click="viewDetail(scope.row)"
+                    >查看</el-button>
+                </template>
+            </el-table-column>
+        </el-table>
+    </div>
+
+    <script>
+        new Vue({
+            el: '#app',
+            data() {
+                return {
+                    // 筛选条件（双向绑定）
+                    filter: {
+                        year: '2025',       // 默认选中2025年
+                        department: '',     // 默认所有系部
+                        keyword: ''         // 搜索关键词
+                    },
+                    // 班级缴费原始数据（模拟接口返回）
+                    classList: []
+                };
+            },
+            computed: {
+                // 🔍 筛选后的班级列表（实时响应筛选条件变化）
+                filteredClasses() {
+                    const { year, department, keyword } = this.filter;
+                    return this.classList.filter(cls => {
+                        // 1. 年份筛选（匹配班级的year属性）
+                        if (year && cls.year !== year) return false;
+                        // 2. 系部筛选（空表示所有系部）
+                        if (department && cls.department !== department) return false;
+                        // 3. 关键词筛选（班级名称、专业、系部模糊匹配）
+                        if (keyword) {
+                            const lowerKeyword = keyword.toLowerCase();
+                            return cls.className.toLowerCase().includes(lowerKeyword) ||
+                                   cls.major.toLowerCase().includes(lowerKeyword) ||
+                                   cls.department.toLowerCase().includes(lowerKeyword);
+                        }
+                        return true;
+                    });
+                },
+
+                // 📊 总应收金额（筛选后班级的应收总和）
+                totalReceivable() {
+                    return this.filteredClasses.reduce((sum, cls) => sum + cls.receivable, 0);
+                },
+
+                // 📊 总实收金额（筛选后班级的实收总和）
+                totalPaid() {
+                    return this.filteredClasses.reduce((sum, cls) => sum + cls.paid, 0);
+                },
+
+                // 📊 总欠费金额（总应收 - 总实收）
+                totalArrears() {
+                    return this.totalReceivable - this.totalPaid;
+                },
+
+                // 📊 总学生数（筛选后班级的学生总数）
+                totalStudents() {
+                    return this.filteredClasses.reduce((sum, cls) => sum + cls.totalStudents, 0);
+                },
+
+                // 📊 已缴费率（总实收/总应收 * 100，保留2位小数）
+                paidRate() {
+                    if (this.totalReceivable === 0) return '0.00';
+                    return ((this.totalPaid / this.totalReceivable) * 100).toFixed(2);
+                },
+
+                // 📊 总欠费学生数（筛选后班级的未缴费人数总和）
+                totalArrearsStudents() {
+                    return this.filteredClasses.reduce((sum, cls) => sum + cls.unpaidCount, 0);
+                }
+            },
+            filters: {
+                // 💴 货币格式化过滤器（添加¥符号、千分位、保留2位小数）
+                currency(value) {
+                    if (typeof value !== 'number') value = 0;
+                    return `¥${value.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`;
+                }
+            },
+            methods: {
+                // 🔄 刷新数据（模拟从接口获取数据）
+                refreshData() {
+                    this.$loading({ text: '正在刷新数据...', background: 'rgba(0,0,0,0.1)' });
+                    setTimeout(() => {
+                        // 模拟接口返回的班级数据（可替换为真实接口请求）
+                        this.classList = [
+                            {
+                                year: '2025',
+                                className: '2025级计算机1班',
+                                department: '计算机系',
+                                major: '计算机科学与技术',
+                                totalStudents: 50,
+                                receivable: 500000,  // 总应收50万
+                                paid: 450000,        // 总实收45万
+                                paidCount: 45,       // 已缴费45人
+                                partialCount: 3,     // 部分缴费3人
+                                unpaidCount: 2       // 未缴费2人
+                            },
+                            {
+                                year: '2025',
+                                className: '2025级电子1班',
+                                department: '电子系',
+                                major: '电子信息工程',
+                                totalStudents: 45,
+                                receivable: 450000,
+                                paid: 400000,
+                                paidCount: 40,
+                                partialCount: 2,
+                                unpaidCount: 3
+                            },
+                            {
+                                year: '2025',
+                                className: '2025级机械1班',
+                                department: '机械系',
+                                major: '机械工程',
+                                totalStudents: 48,
+                                receivable: 480000,
+                                paid: 420000,
+                                paidCount: 42,
+                                partialCount: 4,
+                                unpaidCount: 2
+                            },
+                            {
+                                year: '2024',
+                                className: '2024级土木1班',
+                                department: '土木系',
+                                major: '土木工程',
+                                totalStudents: 52,
+                                receivable: 520000,
+                                paid: 480000,
+                                paidCount: 48,
+                                partialCount: 2,
+                                unpaidCount: 2
+                            }
+                        ];
+                        // 计算每个班级的欠费金额（总应收 - 总实收）
+                        this.classList.forEach(cls => {
+                            cls.arrears = cls.receivable - cls.paid;
+                        });
+                        this.$loading().close();
+                        this.$message.success('数据刷新成功！');
+                    }, 1200);
+                },
+
+                // 👁️ 查看详情（可扩展为弹窗显示详细信息）
+                viewDetail(row) {
+                    this.$alert(`
+                        <h3>${row.className} 缴费详情</h3>
+                        <p>所属系部：${row.department}</p>
+                        <p>专业：${row.major}</p>
+                        <p>学生总数：${row.totalStudents}人</p>
+                        <p>总应收：${row.receivable | currency}</p>
+                        <p>总实收：${row.paid | currency}</p>
+                        <p>总欠费：${row.arrears | currency}</p>
+                        <p>已缴费人数：${row.paidCount}人</p>
+                        <p>部分缴费人数：${row.partialCount}人</p>
+                        <p>未缴费人数：${row.unpaidCount}人</p>
+                    `, '班级缴费详情', {
+                        dangerouslyUseHTMLString: true,
+                        confirmButtonText: '关闭'
+                    });
+                }
+            },
+            mounted() {
+                // 初始化加载数据
+                this.refreshData();
+            }
+        });
+    </script>
+</body>
+</html>
+

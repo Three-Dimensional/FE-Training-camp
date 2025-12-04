@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>缴费批次管理系统</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/element-ui@2.15.13/lib/theme-chalk/index.css">
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.7.14/dist/vue.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/element-ui@2.15.13/lib/index.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e7ed 100%);
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .dashboard {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+            overflow: hidden;
+            padding: 30px;
+            position: relative;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #ebeef5;
+            position: relative;
+        }
+        
+        .header-content h2 {
+            font-size: 28px;
+            color: #1f2d3d;
+            font-weight: 600;
+            position: relative;
+            padding-left: 15px;
+        }
+        
+        .header-content h2::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            height: 28px;
+            width: 6px;
+            background: #409EFF;
+            border-radius: 3px;
+        }
+        
+        .header-content p {
+            margin-top: 10px;
+            color: #606266;
+            font-size: 15px;
+            max-width: 700px;
+            line-height: 1.7;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .filter-bar {
+            background: linear-gradient(120deg, #f2f6fc 0%, #e8f4ff 100%);
+            padding: 20px 25px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            align-items: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+        }
+        
+        .filter-item {
+            display: flex;
+            align-items: center;
+            flex: 1;
+            min-width: 250px;
+        }
+        
+        .filter-item label {
+            margin-right: 12px;
+            color: #606266;
+            font-size: 14px;
+            white-space: nowrap;
+            font-weight: 500;
+        }
+        
+        .status-info {
+            display: flex;
+            align-items: center;
+            background: linear-gradient(90deg, #ecf5ff 0%, #d9eeff 100%);
+            padding: 12px 25px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            border-left: 4px solid #409EFF;
+        }
+        
+        .status-info span {
+            margin-right: 25px;
+            color: #409EFF;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+        }
+        
+        .status-info span i {
+            margin-right: 8px;
+            font-size: 16px;
+        }
+        
+        .batch-table {
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+            margin-bottom: 30px;
+            border: 1px solid #ebeef5;
+        }
+        
+        .batch-table .el-table__header {
+            background: #f5f7fa;
+        }
+        
+        .batch-table .el-table__header th {
+            background: linear-gradient(to bottom, #f5f7fa, #eef2f7);
+            font-weight: 600;
+            color: #1f2d3d;
+            font-size: 14px;
+        }
+        
+        .batch-table .el-table__row:hover {
+            background-color: #f9fbfd !important;
+        }
+        
+        .batch-table .el-table__row:nth-child(even) {
+            background-color: #fafcff;
+        }
+        
+        .batch-summary {
+            display: flex;
+            justify-content: space-between;
+            background: linear-gradient(90deg, #f5f7fa 0%, #f0f7ff 100%);
+            padding: 18px 25px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-size: 14px;
+            border: 1px solid #e4e7ed;
+        }
+        
+        .batch-summary div {
+            display: flex;
+            gap: 35px;
+        }
+        
+        .batch-summary span {
+            color: #409EFF;
+            font-weight: 600;
+            font-size: 15px;
+        }
+        
+        .batch-summary strong {
+            color: #1f2d3d;
+            font-weight: 700;
+            font-size: 16px;
+            min-width: 30px;
+            display: inline-block;
+            text-align: center;
+        }
+        
+        .dialog-form .el-form-item {
+            margin-bottom: 22px;
+        }
+        
+        .dialog-form .el-form-item__label {
+            font-weight: 500;
+            color: #606266;
+        }
+        
+        .status-tag {
+            font-weight: 500;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-size: 13px;
+        }
+        
+        .completed {
+            background-color: #ecf5ff;
+            color: #409EFF;
+        }
+        
+        .active {
+            background-color: #f0f9eb;
+            color: #67C23A;
+        }
+        
+        .disabled {
+            background-color: #f4f4f5;
+            color: #909399;
+        }
+        
+        .operation-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .operation-buttons .el-button {
+            padding: 6px 10px;
+            border-radius: 4px;
+        }
+        
+        .no-data {
+            text-align: center;
+            padding: 50px 0;
+            color: #909399;
+            background: #fafbfc;
+        }
+        
+        .dashboard-title {
+            text-align: center;
+            margin-bottom: 10px;
+            color: #409EFF;
+            font-size: 14px;
+            font-weight: 500;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        
+        .system-footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #909399;
+            font-size: 13px;
+            padding-top: 15px;
+            border-top: 1px solid #ebeef5;
+        }
+        
+        .el-table__body-wrapper {
+            overflow-x: auto;
+        }
+        
+        .el-table .cell {
+            padding: 8px 12px;
+        }
+        
+        @media (max-width: 1200px) {
+            .filter-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .filter-item {
+                width: 100%;
+                min-width: auto;
+            }
+            
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+            
+            .action-buttons {
+                width: 100%;
+                justify-content: flex-end;
+            }
+            
+            .batch-summary div {
+                flex-wrap: wrap;
+                gap: 15px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .dashboard {
+                padding: 15px;
+            }
+            
+            .batch-summary {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .operation-buttons {
+                flex-wrap: wrap;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app" class="dashboard">
+        <div class="dashboard-title">学校缴费管理系统</div>
+        
+        <!-- 顶部栏 -->
+        <div class="header">
+            <div class="header-content">
+                <h2>缴费批次管理</h2>
+                <p>管理学校的缴费批次信息，设置批次与年份、学期的关联，支持多条件筛选、搜索和批量操作</p>
+            </div>
+            <div class="action-buttons">
+                <el-button type="primary" icon="el-icon-plus" @click="openAddDialog">添加缴费批次</el-button>
+                <el-button icon="el-icon-refresh" @click="refreshData">刷新数据</el-button>
+                <el-button icon="el-icon-download">导出数据</el-button>
+            </div>
+        </div>
+
+        <!-- 筛选区域 -->
+        <div class="filter-bar">
+            <div class="filter-item">
+                <label>年份：</label>
+                <el-select v-model="filter.year" placeholder="请选择年份" style="flex: 1;">
+                    <el-option v-for="year in yearOptions" 
+                               :key="year.value"
+                               :label="year.label"
+                               :value="year.value">
+                    </el-option>
+                </el-select>
+            </div>
+            
+            <div class="filter-item">
+                <label>学期：</label>
+                <el-select v-model="filter.semester" placeholder="所有学期" style="flex: 1;">
+                    <el-option v-for="semester in semesterOptions" 
+                               :key="semester.value"
+                               :label="semester.label"
+                               :value="semester.value">
+                    </el-option>
+                </el-select>
+            </div>
+            
+            <div class="filter-item">
+                <el-input 
+                    v-model="filter.keyword" 
+                    placeholder="搜索批次名称或代码..." 
+                    prefix-icon="el-icon-search"
+                    style="flex: 1;"
+                ></el-input>
+            </div>
+            
+            <div class="filter-item">
+                <label>状态：</label>
+                <el-select v-model="filter.status" placeholder="所有状态" style="flex: 1;">
+                    <el-option v-for="status in statusOptions" 
+                               :key="status.value"
+                               :label="status.label"
+                               :value="status.value">
+                    </el-option>
+                </el-select>
+            </div>
+        </div>
+
+        <!-- 状态信息 -->
+        <div class="status-info">
+            <span><i class="el-icon-info"></i> 当前有 {{ activeBatchCount }} 个批次处于激活状态</span>
+            <span><i class="el-icon-time"></i> 最近一次创建时间：{{ latestCreatedDate || '暂无记录' }}</span>
+            <span><i class="el-icon-data-line"></i> 当前显示 {{ filteredBatches.length }} 个批次</span>
+        </div>
+
+        <!-- 缴费批次列表 -->
+        <div class="batch-table">
+            <el-table 
+                :data="filteredBatches" 
+                border 
+                stripe 
+                style="width: 100%;"
+                v-loading="loading"
+            >
+                <el-table-column 
+                    prop="year" 
+                    label="年份" 
+                    width="90"
+                    align="center"
+                ></el-table-column>
+                
+                <el-table-column 
+                    prop="semester" 
+                    label="学期" 
+                    width="100"
+                ></el-table-column>
+                
+                <el-table-column 
+                    prop="name" 
+                    label="批次名称" 
+                    min-width="200"
+                ></el-table-column>
+                
+                <el-table-column 
+                    prop="code" 
+                    label="批次代码" 
+                    width="180"
+                ></el-table-column>
+                
+                <el-table-column 
+                    prop="startDate" 
+                    label="开始日期" 
+                    width="120"
+                    align="center"
+                ></el-table-column>
+                
+                <el-table-column 
+                    prop="endDate" 
+                    label="结束日期" 
+                    width="120"
+                    align="center"
+                ></el-table-column>
+                
+                <el-table-column 
+                    label="状态" 
+                    width="100"
+                    align="center"
+                >
+                    <template slot-scope="scope">
+                        <el-tag :class="scope.row.status" class="status-tag">
+                            {{ scope.row.statusText }}
+                        </el-tag>
+                    </template>
+                </el-table-column>
+                
+                <el-table-column 
+                    prop="description" 
+                    label="描述" 
+                    min-width="200"
+                    show-overflow-tooltip
+                ></el-table-column>
+                
+                <el-table-column 
+                    prop="createDate" 
+                    label="创建日期" 
+                    width="120"
+                    align="center"
+                ></el-table-column>
+                
+                <el-table-column label="操作" width="160" fixed="right" align="center">
+                    <template slot-scope="scope">
+                        <div class="operation-buttons">
+                            <el-button 
+                                type="primary" 
+                                icon="el-icon-edit" 
+                                size="small"
+                                @click="editItem(scope.row)"
+                                circle
+                            ></el-button>
+                            <el-button 
+                                type="danger" 
+                                icon="el-icon-delete" 
+                                size="small"
+                                @click="deleteItem(scope.row)"
+                                circle
+                            ></el-button>
+                            <el-button 
+                                type="success" 
+                                icon="el-icon-view" 
+                                size="small"
+                                @click="viewItem(scope.row)"
+                                circle
+                            ></el-button>
+                        </div>
+                    </template>
+                </el-table-column>
+            </el-table>
+            
+            <div class="no-data" v-if="filteredBatches.length === 0 && !loading">
+                <el-empty description="没有找到符合条件的批次数据"></el-empty>
+            </div>
+        </div>
+
+        <!-- 批次统计信息 -->
+        <div class="batch-summary">
+            <div>
+                <span>批次总数：<strong>{{ batches.length }}</strong></span>
+                <span>激活批次：<strong>{{ activeBatchCount }}</strong></span>
+                <span>完成批次：<strong>{{ completedBatchCount }}</strong></span>
+                <span>停用批次：<strong>{{ disabledBatchCount }}</strong></span>
+            </div>
+            <div>
+                <span>当前年份：<strong>{{ filter.year || '未选择' }}</strong></span>
+                <span>当前学期：<strong>{{ semesterText || '所有学期' }}</strong></span>
+            </div>
+        </div>
+
+        <!-- 添加/编辑批次弹窗 -->
+        <el-dialog 
+            :title="dialogTitle" 
+            :visible.sync="dialogVisible" 
+            width="650px"
+            :close-on-click-modal="false"
+            @closed="closeDialog"
+            custom-class="batch-dialog"
+        >
+            <el-form 
+                :model="form" 
+                :rules="formRules" 
+                ref="form" 
+                label-width="100px"
+                class="dialog-form"
+            >
+                <el-row :gutter="20">
+                    <el-col :span="12">
+                        <el-form-item label="年份*" prop="year">
+                            <el-select v-model="form.year" placeholder="请选择年份" style="width: 100%;">
+                                <el-option v-for="year in yearOptions" 
+                                           :key="year.value"
+                                           :label="year.label"
+                                           :value="year.value">
+                                </el-option>
+                            </el-select>
+                        </el-form-item>
+                    </el-col>
+                    
+                    <el-col :span="12">
+                        <el-form-item label="学期*" prop="semester">
+                            <el-select v-model="form.semester" placeholder="请选择学期" style="width: 100%;">
+                                <el-option v-for="semester in semesterOptions.filter(s => s.value !== 'all')" 
+                                           :key="semester.value"
+                                           :label="semester.label"
+                                           :value="semester.value">
+                                </el-option>
+                            </el-select>
+                        </el-form-item>
+                    </el-col>
+                </el-row>
+                
+                <el-form-item label="批次名称*" prop="name">
+                    <el-input 
+                        v-model="form.name" 
+                        placeholder="例如：2025年秋季入学第一批缴费"
+                    ></el-input>
+                </el-form-item>
+                
+                <el-form-item label="批次代码*" prop="code">
+                    <el-input 
+                        v-model="form.code" 
+                        placeholder="例如：FALL_2025_BATCH1"
+                    ></el-input>
+                </el-form-item>
+                
+                <el-row :gutter="20">
+                    <el-col :span="12">
+                        <el-form-item label="开始日期*" prop="startDate">
+                            <el-date-picker 
+                                v-model="form.startDate" 
+                                type="date" 
+                                placeholder="选择开始日期"
+                                value-format="yyyy-MM-dd"
+                                style="width: 100%;"
+                            ></el-date-picker>
+                        </el-form-item>
+                    </el-col>
+                    
+                    <el-col :span="12">
+                        <el-form-item label="结束日期*" prop="endDate">
+                            <el-date-picker 
+                                v-model="form.endDate" 
+                                type="date" 
+                                placeholder="选择结束日期"
+                                value-format="yyyy-MM-dd"
+                                style="width: 100%;"
+                            ></el-date-picker>
+                        </el-form-item>
+                    </el-col>
+                </el-row>
+                
+                <el-form-item label="状态" prop="status">
+                    <el-select v-model="form.status" placeholder="请选择状态" style="width: 100%;">
+                        <el-option v-for="status in statusOptions.filter(s => s.value !== 'all')" 
+                                   :key="status.value"
+                                   :label="status.label"
+                                   :value="status.value">
+                        </el-option>
+                    </el-select>
+                </el-form-item>
+                
+                <el-form-item label="批次描述" prop="description">
+                    <el-input 
+                        v-model="form.description" 
+                        type="textarea" 
+                        :rows="3" 
+                        placeholder="输入批次描述信息..."
+                    ></el-input>
+                </el-form-item>
+            </el-form>
+            
+            <div slot="footer" class="dialog-footer">
+                <el-button @click="dialogVisible = false">取消</el-button>
+                <el-button type="primary" @click="saveForm">保存</el-button>
+            </div>
+        </el-dialog>
+        
+        <div class="system-footer">
+            缴费批次管理系统 &copy; 2023 版权所有
+        </div>
+    </div>
+
+    <script>
+        new Vue({
+            el: '#app',
+            data() {
+                return {
+                    loading: false,
+                    // 筛选条件
+                    filter: {
+                        year: '2025',
+                        semester: 'all',
+                        keyword: '',
+                        status: 'all'
+                    },
+                    
+                    // 选项数据
+                    yearOptions: [
+                        { label: '2025年', value: '2025' },
+                        { label: '2024年', value: '2024' },
+                        { label: '2023年', value: '2023' }
+                    ],
+                    
+                    semesterOptions: [
+                        { label: '所有学期', value: 'all' },
+                        { label: '秋季学期', value: 'fall' },
+                        { label: '春季学期', value: 'spring' }
+                    ],
+                    
+                    statusOptions: [
+                        { label: '所有状态', value: 'all' },
+                        { label: '已完成', value: 'completed' },
+                        { label: '已激活', value: 'active' },
+                        { label: '已停用', value: 'disabled' }
+                    ],
+                    
+                    // 缴费批次数据
+                    batches: [
+                        {
+                            id: 1,
+                            year: '2025',
+                            semester: '秋季学期',
+                            name: '2025年秋季入学第一批缴费',
+                            code: 'FALL_2025_BATCH1',
+                            startDate: '2025-07-01',
+                            endDate: '2025-07-15',
+                            status: 'completed',
+                            statusText: '已完成',
+                            description: '2025年秋季入学新生第一批缴费',
+                            createDate: '2024-12-01'
+                        },
+                        {
+                            id: 2,
+                            year: '2025',
+                            semester: '秋季学期',
+                            name: '2025年秋季入学第二批缴费',
+                            code: 'FALL_2025_BATCH2',
+                            startDate: '2025-07-16',
+                            endDate: '2025-07-31',
+                            status: 'active',
+                            statusText: '已激活',
+                            description: '2025年秋季入学新生第二批缴费',
+                            createDate: '2024-12-01'
+                        },
+                        {
+                            id: 3,
+                            year: '2025',
+                            semester: '秋季学期',
+                            name: '2025年秋季入学第三批缴费',
+                            code: 'FALL_2025_BATCH3',
+                            startDate: '2025-08-01',
+                            endDate: '2025-08-15',
+                            status: 'disabled',
+                            statusText: '已停用',
+                            description: '2025年秋季入学新生第三批缴费',
+                            createDate: '2024-12-01'
+                        },
+                        {
+                            id: 4,
+                            year: '2024',
+                            semester: '春季学期',
+                            name: '2024年春季缴费批次',
+                            code: 'SPRING_2024_BATCH1',
+                            startDate: '2024-02-10',
+                            endDate: '2024-02-28',
+                            status: 'completed',
+                            statusText: '已完成',
+                            description: '2024年春季学期学费缴费',
+                            createDate: '2023-11-15'
+                        },
+                        {
+                            id: 5,
+                            year: '2024',
+                            semester: '秋季学期',
+                            name: '2024年秋季缴费批次',
+                            code: 'FALL_2024_BATCH1',
+                            startDate: '2024-08-01',
+                            endDate: '2024-08-31',
+                            status: 'completed',
+                            statusText: '已完成',
+                            description: '2024年秋季学期学费缴费',
+                            createDate: '2024-05-20'
+                        }
+                    ],
+                    
+                    // 弹窗状态
+                    dialogVisible: false,
+                    dialogTitle: '添加缴费批次',
+                    
+                    // 表单数据
+                    form: {
+                        id: null,
+                        year: '2025',
+                        semester: 'fall',
+                        name: '',
+                        code: '',
+                        startDate: '',
+                        endDate: '',
+                        status: 'active',
+                        description: ''
+                    },
+                    
+                    // 表单验证规则
+                    formRules: {
+                        year: [{ required: true, message: '请选择年份', trigger: 'change' }],
+                        semester: [{ required: true, message: '请选择学期', trigger: 'change' }],
+                        name: [{ required: true, message: '请输入批次名称', trigger: 'blur' }],
+                        code: [{ required: true, message: '请输入批次代码', trigger: 'blur' }],
+                        startDate: [
+                            { required: true, message: '请选择开始日期', trigger: 'change' },
+                            { validator: this.checkStartDate, trigger: 'change' }
+                        ],
+                        endDate: [
+                            { required: true, message: '请选择结束日期', trigger: 'change' },
+                            { validator: this.checkEndDate, trigger: 'change' }
+                        ]
+                    }
+                }
+            },
+            computed: {
+                // 筛选后的批次列表
+                filteredBatches() {
+                    const { year, semester, keyword, status } = this.filter;
+                    return this.batches.filter(item => {
+                        // 年份筛选
+                        if (year && year !== 'all' && item.year !== year) return false;
+                        // 学期筛选（all显示所有）
+                        if (semester !== 'all' && item.semester !== semester) return false;
+                        // 状态筛选（all显示所有）
+                        if (status !== 'all' && item.status !== status) return false;
+                        // 关键词筛选（名称/代码）
+                        if (keyword) {
+                            const lowerKeyword = keyword.toLowerCase();
+                            return item.name.toLowerCase().includes(lowerKeyword) || 
+                                   item.code.toLowerCase().includes(lowerKeyword);
+                        }
+                        return true;
+                    });
+                },
+                
+                // 计算激活批次数量
+                activeBatchCount() {
+                    return this.batches.filter(item => item.status === 'active').length;
+                },
+                
+                // 计算完成批次数量
+                completedBatchCount() {
+                    return this.batches.filter(item => item.status === 'completed').length;
+                },
+                
+                // 计算停用批次数量
+                disabledBatchCount() {
+                    return this.batches.filter(item => item.status === 'disabled').length;
+                },
+                
+                // 获取最新创建的批次日期
+                latestCreatedDate() {
+                    if (this.batches.length === 0) return null;
+                    const sorted = [...this.batches].sort((a, b) => 
+                        new Date(b.createDate) - new Date(a.createDate)
+                    );
+                    return sorted[0].createDate;
+                },
+                
+                // 当前学期文本
+                semesterText() {
+                    if (this.filter.semester === 'all') return null;
+                    const semester = this.semesterOptions.find(s => s.value === this.filter.semester);
+                    return semester ? semester.label : null;
+                }
+            },
+            methods: {
+                // 校验开始日期（不能早于当前日期）
+                checkStartDate(rule, value, callback) {
+                    if (!value) {
+                        callback(new Error('请选择开始日期'));
+                        return;
+                    }
+                    
+                    const selectedDate = new Date(value);
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    
+                    if (selectedDate < today) {
+                        callback(new Error('开始日期不能早于当前日期'));
+                    } else {
+                        callback();
+                    }
+                },
+                
+                // 校验结束日期（不能早于开始日期）
+                checkEndDate(rule, value, callback) {
+                    if (!value) {
+                        callback(new Error('请选择结束日期'));
+                        return;
+                    }
+                    
+                    if (!this.form.startDate) {
+                        callback(new Error('请先选择开始日期'));
+                        return;
+                    }
+                    
+                    const startDate = new Date(this.form.startDate);
+                    const endDate = new Date(value);
+                    
+                    if (endDate < startDate) {
+                        callback(new Error('结束日期不能早于开始日期'));
+                    } else {
+                        callback();
+                    }
+                },
+                
+                // 打开添加弹窗
+                openAddDialog() {
+                    this.dialogTitle = '添加缴费批次';
+                    this.form = {
+                        id: null,
+                        year: '2025',
+                        semester: 'fall',
+                        name: '',
+                        code: '',
+                        startDate: '',
+                        endDate: '',
+                        status: 'active',
+                        description: ''
+                    };
+                    this.dialogVisible = true;
+                    this.$nextTick(() => {
+                        this.$refs.form.clearValidate();
+                    });
+                },
+                
+                // 编辑批次
+                editItem(row) {
+                    this.dialogTitle = '编辑缴费批次';
+                    this.form = {
+                        ...row,
+                        semester: row.semester === '秋季学期' ? 'fall' : 'spring'
+                    };
+                    this.dialogVisible = true;
+                },
+                
+                // 查看批次
+                viewItem(row) {
+                    this.$message({
+                        message: `查看批次: ${row.name}`,
+                        type: 'info',
+                        duration: 1500
+                    });
+                },
+                
+                // 删除批次
+                deleteItem(row) {
+                    this.$confirm(`确定删除批次「${row.name}」吗？`, '警告', {
+                        type: 'warning',
+                        confirmButtonText: '确定',
+                        cancelButtonText: '取消',
+                        confirmButtonClass: 'el-button--danger'
+                    }).then(() => {
+                        this.batches = this.batches.filter(item => item.id !== row.id);
+                        this.$message.success('删除成功');
+                    }).catch(() => {
+                        this.$message.info('已取消删除');
+                    });
+                },
+                
+                // 关闭弹窗
+                closeDialog() {
+                    this.dialogVisible = false;
+                    this.$refs.form.resetFields();
+                },
+                
+                // 保存表单
+                saveForm() {
+                    this.$refs.form.validate(valid => {
+                        if (!valid) return;
+                        
+                        const formData = {
+                            ...this.form,
+                            semester: this.form.semester === 'fall' ? '秋季学期' : '春季学期',
+                            statusText: {
+                                active: '已激活',
+                                completed: '已完成',
+                                disabled: '已停用'
+                            }[this.form.status]
+                        };
+                        
+                        if (formData.id) {
+                            // 更新操作
+                            const index = this.batches.findIndex(item => item.id === formData.id);
+                            this.batches.splice(index, 1, formData);
+                            this.$message.success('批次更新成功');
+                        } else {
+                            // 添加操作
+                            formData.id = this.batches.length ? Math.max(...this.batches.map(i => i.id)) + 1 : 1;
+                            formData.createDate = new Date().toISOString().slice(0, 10);
+                            this.batches.push(formData);
+                            this.$message.success('批次添加成功');
+                        }
+                        
+                        this.dialogVisible = false;
+                    });
+                },
+                
+                // 刷新数据
+                refreshData() {
+                    this.loading = true;
+                    setTimeout(() => {
+                        this.loading = false;
+                        this.$message.success('数据已刷新');
+                    }, 800);
+                }
+            }
+        });
+    </script>
+</body>
+</html>

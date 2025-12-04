@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>缴费批次管理</title>
+  
+  <!-- 引入Element UI样式（必须先于Vue引入） -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/element-ui@2.15.13/lib/theme-chalk/index.css">
+  
+  <!-- 引入Vue 2.7.14 -->
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.7.14/dist/vue.js"></script>
+  
+  <!-- 引入Element UI组件库（包含图标） -->
+  <script src="https://cdn.jsdelivr.net/npm/element-ui@2.15.13/lib/index.js"></script>
+</head>
+<body>
+  <div id="app" class="batch-management">
+    <!-- 顶部栏 -->
+    <div class="header">
+      <div class="header-left">
+        <h2>缴费批次管理</h2>
+        <p class="description">管理学校的缴费批次信息，设置批次与年份、学期的关联</p>
+      </div>
+      <el-button type="primary" @click="openAddDialog">+ 添加缴费批次</el-button>
+    </div>
+
+    <!-- 搜索区域 -->
+    <el-form :model="searchForm" inline class="search-form" label-width="0">
+      <el-form-item>
+        <el-select v-model="searchForm.year" placeholder="请选择年份" style="width: 120px;">
+          <el-option label="2025年" value="2025"></el-option>
+          <el-option label="2024年" value="2024"></el-option>
+        </el-select>
+      </el-form-item>
+      <el-form-item>
+        <el-select v-model="searchForm.semester" placeholder="所有学期" style="width: 150px;">
+          <el-option label="所有学期" value="all"></el-option>
+          <el-option label="秋季学期" value="fall"></el-option>
+          <el-option label="春季学期" value="spring"></el-option>
+        </el-select>
+      </el-form-item>
+      <el-form-item>
+        <el-input 
+          v-model="searchForm.keyword" 
+          placeholder="搜索批次名称或代码..." 
+          style="width: 300px;"
+          prefix-icon="el-icon-search"
+        ></el-input>
+      </el-form-item>
+      <el-form-item>
+        <el-select v-model="searchForm.status" placeholder="所有状态" style="width: 120px;">
+          <el-option label="所有状态" value="all"></el-option>
+          <el-option label="已完成" value="completed"></el-option>
+          <el-option label="已激活" value="active"></el-option>
+          <el-option label="已停用" value="disabled"></el-option>
+        </el-select>
+      </el-form-item>
+    </el-form>
+
+    <!-- 数据表格 -->
+    <el-table 
+      :data="filteredTableData" 
+      border 
+      stripe 
+      style="width: 100%; margin-top: 20px;"
+      :header-cell-style="{ background: '#f5f7fa', fontWeight: 'bold' }"
+    >
+      <el-table-column prop="year" label="年份" width="80"></el-table-column>
+      <el-table-column prop="semester" label="学期" width="100"></el-table-column>
+      <el-table-column prop="batchName" label="批次名称" width="180"></el-table-column>
+      <el-table-column prop="batchCode" label="批次代码" width="180"></el-table-column>
+      <el-table-column prop="startDate" label="开始日期" width="120"></el-table-column>
+      <el-table-column prop="endDate" label="结束日期" width="120"></el-table-column>
+      <el-table-column prop="status" label="状态" width="100">
+        <template slot-scope="scope">
+          <el-tag 
+            :type="getStatusTagType(scope.row.status)"
+            size="small"
+          >{{ scope.row.statusText }}</el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column prop="description" label="描述"></el-table-column>
+      <el-table-column prop="createDate" label="创建日期" width="120"></el-table-column>
+      <el-table-column label="操作" width="180" fixed="right">
+        <template slot-scope="scope">
+          <el-button 
+            type="text" 
+            icon="el-icon-edit" 
+            @click="editBatch(scope.row)"
+            size="small"
+          >编辑</el-button>
+          
+          <!-- 根据状态显示不同操作 -->
+          <template v-if="scope.row.status === 'completed'">
+            <el-button 
+              type="text" 
+              icon="el-icon-delete" 
+              @click="deleteBatch(scope.row)"
+              size="small"
+              class="delete-btn"
+            >删除</el-button>
+          </template>
+          
+          <template v-else-if="scope.row.status === 'active'">
+            <el-button 
+              type="text" 
+              icon="el-icon-stop" 
+              @click="toggleStatus(scope.row, 'disabled')"
+              size="small"
+              class="disable-btn"
+            >停用</el-button>
+          </template>
+          
+          <template v-else>
+            <el-button 
+              type="text" 
+              icon="el-icon-check" 
+              @click="toggleStatus(scope.row, 'active')"
+              size="small"
+              class="enable-btn"
+            >激活</el-button>
+            <el-button 
+              type="text" 
+              icon="el-icon-delete" 
+              @click="deleteBatch(scope.row)"
+              size="small"
+              class="delete-btn"
+            >删除</el-button>
+          </template>
+        </template>
+      </el-table-column>
+    </el-table>
+
+    <!-- 添加/编辑对话框（复用） -->
+    <el-dialog 
+      title="缴费批次" 
+      :visible.sync="dialogVisible" 
+      width="50%"
+      :before-close="closeDialog"
+    >
+      <el-form 
+        :model="form" 
+        ref="form" 
+        label-width="120px" 
+        style="margin-top: 20px;"
+      >
+        <el-form-item label="年份" prop="year" :rules="{ required: true, message: '请选择年份', trigger: 'change' }">
+          <el-select v-model="form.year" placeholder="请选择年份">
+            <el-option label="2025年" value="2025"></el-option>
+            <el-option label="2024年" value="2024"></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="学期" prop="semester" :rules="{ required: true, message: '请选择学期', trigger: 'change' }">
+          <el-select v-model="form.semester" placeholder="请选择学期">
+            <el-option label="秋季学期" value="fall"></el-option>
+            <el-option label="春季学期" value="spring"></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="批次名称" prop="batchName" :rules="{ required: true, message: '请输入批次名称', trigger: 'blur' }">
+          <el-input v-model="form.batchName" placeholder="如：2025年秋季入学第一批缴费"></el-input>
+        </el-form-item>
+        <el-form-item label="批次代码" prop="batchCode" :rules="{ required: true, message: '请输入批次代码', trigger: 'blur' }">
+          <el-input v-model="form.batchCode" placeholder="如：FALL_2025_BATCH1"></el-input>
+        </el-form-item>
+        <el-form-item label="开始日期" prop="startDate" :rules="{ required: true, message: '请选择开始日期', trigger: 'change' }">
+          <el-date-picker 
+            v-model="form.startDate" 
+            type="date" 
+            placeholder="选择开始日期" 
+            value-format="yyyy-MM-dd"
+          ></el-date-picker>
+        </el-form-item>
+        <el-form-item label="结束日期" prop="endDate" :rules="{ required: true, message: '请选择结束日期', trigger: 'change' }">
+          <el-date-picker 
+            v-model="form.endDate" 
+            type="date" 
+            placeholder="选择结束日期" 
+            value-format="yyyy-MM-dd"
+          ></el-date-picker>
+        </el-form-item>
+        <el-form-item label="描述" prop="description">
+          <el-input v-model="form.description" type="textarea" rows="3" placeholder="请输入描述"></el-input>
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="closeDialog">取消</el-button>
+        <el-button type="primary" @click="saveBatch">确定</el-button>
+      </div>
+    </el-dialog>
+  </div>
+
+  <script>
+    new Vue({
+      el: '#app',
+      data() {
+        return {
+          // 搜索条件
+          searchForm: {
+            year: '2025', // 默认选中2025年
+            semester: 'all',
+            keyword: '',
+            status: 'all'
+          },
+          // 表格原始数据（模拟接口返回）
+          tableData: [
+            {
+              id: 1,
+              year: '2025',
+              semester: '秋季学期',
+              batchName: '2025年秋季入学第一批缴费',
+              batchCode: 'FALL_2025_BATCH1',
+              startDate: '2025-07-01',
+              endDate: '2025-07-15',
+              status: 'completed', // 状态值（用于逻辑判断）
+              statusText: '已完成', // 状态文本（用于显示）
+              description: '2025年秋季入学新生第一批缴费',
+              createDate: '2024-12-01'
+            },
+            {
+              id: 2,
+              year: '2025',
+              semester: '秋季学期',
+              batchName: '2025年秋季入学第二批缴费',
+              batchCode: 'FALL_2025_BATCH2',
+              startDate: '2025-07-16',
+              endDate: '2025-07-31',
+              status: 'active',
+              statusText: '已激活',
+              description: '2025年秋季入学新生第二批缴费',
+              createDate: '2024-12-01'
+            },
+            {
+              id: 3,
+              year: '2025',
+              semester: '秋季学期',
+              batchName: '2025年秋季入学第三批缴费',
+              batchCode: 'FALL_2025_BATCH3',
+              startDate: '2025-08-01',
+              endDate: '2025-08-15',
+              status: 'disabled',
+              statusText: '已停用',
+              description: '2025年秋季入学新生第三批缴费',
+              createDate: '2024-12-01'
+            }
+          ],
+          // 对话框状态
+          dialogVisible: false,
+          // 表单数据（添加/编辑复用）
+          form: {
+            id: null,
+            year: '',
+            semester: '',
+            batchName: '',
+            batchCode: '',
+            startDate: '',
+            endDate: '',
+            description: ''
+          }
+        }
+      },
+      computed: {
+        // 过滤后的表格数据（根据搜索条件动态更新）
+        filteredTableData() {
+          const { year, semester, keyword, status } = this.searchForm;
+          return this.tableData.filter(item => {
+            // 1. 年份过滤（默认显示2025年）
+            if (year !== 'all' && item.year !== year) return false;
+            // 2. 学期过滤（all显示所有）
+            if (semester !== 'all' && item.semester !== semester) return false;
+            // 3. 关键词过滤（批次名称/代码）
+            if (keyword) {
+              const lowerKeyword = keyword.toLowerCase();
+              if (
+                !item.batchName.toLowerCase().includes(lowerKeyword) &&
+                !item.batchCode.toLowerCase().includes(lowerKeyword)
+              ) {
+                return false;
+              }
+            }
+            // 4. 状态过滤（all显示所有）
+            if (status !== 'all' && item.status !== status) return false;
+            // 所有条件都满足
+            return true;
+          });
+        }
+      },
+      methods: {
+        // 打开添加对话框
+        openAddDialog() {
+          this.dialogVisible = true;
+          this.form = { id: null }; // 重置表单
+          this.$nextTick(() => this.$refs.form.resetFields()); // 重置表单校验
+        },
+        // 打开编辑对话框（携带数据）
+        editBatch(row) {
+          this.dialogVisible = true;
+          this.form = { ...row }; // 拷贝行数据到表单
+        },
+        // 关闭对话框
+        closeDialog() {
+          this.dialogVisible = false;
+          this.$refs.form.resetFields(); // 重置表单
+        },
+        // 保存批次（添加/编辑复用）
+        saveBatch() {
+          this.$refs.form.validate(valid => {
+            if (valid) {
+              if (this.form.id) {
+                // 编辑操作：更新表格数据
+                const index = this.tableData.findIndex(item => item.id === this.form.id);
+                this.tableData.splice(index, 1, { ...this.form });
+                this.$message.success('编辑成功');
+              } else {
+                // 添加操作：生成新id，插入表格
+                const newBatch = {
+                  ...this.form,
+                  id: this.tableData.length + 1,
+                  status: 'active', // 默认激活状态
+                  statusText: '已激活',
+                  createDate: new Date().toISOString().slice(0, 10) // 模拟创建日期
+                };
+                this.tableData.unshift(newBatch);
+                this.$message.success('添加成功');
+              }
+              this.closeDialog();
+            }
+          });
+        },
+        // 删除批次（带确认提示）
+        deleteBatch(row) {
+          this.$confirm(`确定删除批次「${row.batchName}」？`, '警告', {
+            type: 'warning',
+            confirmButtonText: '确定',
+            cancelButtonText: '取消'
+          }).then(() => {
+            this.tableData = this.tableData.filter(item => item.id !== row.id);
+            this.$message.success('删除成功');
+          }).catch(() => {
+            this.$message.info('取消删除');
+          });
+        },
+        // 切换状态（停用/激活）
+        toggleStatus(row, newStatus) {
+          row.status = newStatus;
+          row.statusText = newStatus === 'active' ? '已激活' : '已停用';
+          this.$message.success(`状态更新成功`);
+        },
+        // 根据状态返回Tag类型（Element UI的Tag组件类型）
+        getStatusTagType(status) {
+          switch (status) {
+            case 'completed': return 'info'; // 已完成（蓝色）
+            case 'active': return 'success'; // 已激活（绿色）
+            case 'disabled': return 'default'; // 已停用（灰色）
+            default: return 'default';
+          }
+        }
+      }
+    });
+  </script>
+
+  <style>
+    .batch-management {
+      padding: 20px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .header .description {
+      font-size: 14px;
+      color: #666;
+      margin-top: 5px;
+    }
+    .search-form {
+      padding: 15px;
+      background: #f5f7fa;
+      border-radius: 8px;
+    }
+    .el-tag {
+      padding: 4px 8px;
+      font-size: 12px;
+    }
+    .delete-btn {
+      color: #ff4949;
+    }
+    .disable-btn {
+      color: #ff9800;
+    }
+    .enable-btn {
+      color: #4caf50;
+    }
+    .el-button + .el-button {
+      margin-left: 10px;
+    }
+    .dialog-footer {
+      text-align: right;
+    }
+  </style>
+</body>
+</html>

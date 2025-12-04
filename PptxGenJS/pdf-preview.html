@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF预览工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            color: #4a5568;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            font-size: 1.1rem;
+            color: #718096;
+        }
+
+        .upload-section {
+            background: #f7fafc;
+            border: 2px dashed #cbd5e0;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 30px;
+            transition: all 0.3s ease;
+        }
+
+        .upload-section:hover {
+            border-color: #667eea;
+            background: #edf2f7;
+        }
+
+        .upload-section.dragover {
+            border-color: #667eea;
+            background: #e2e8f0;
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        .upload-text {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            color: #4a5568;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .upload-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .upload-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .preview-section {
+            display: none;
+        }
+
+        .preview-section.active {
+            display: block;
+        }
+
+        .preview-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            background: #f7fafc;
+            padding: 15px 20px;
+            border-radius: 10px;
+        }
+
+        .page-info {
+            font-size: 1.1rem;
+            color: #4a5568;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .nav-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .nav-btn:disabled {
+            background: #cbd5e0;
+            cursor: not-allowed;
+        }
+
+        .nav-btn:hover:not(:disabled) {
+            background: #5a67d8;
+        }
+
+        .preview-container {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .pdf-canvas {
+            display: block;
+            margin: 0 auto;
+            max-width: 100%;
+            height: auto;
+        }
+
+        .file-info {
+            background: #f7fafc;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        .file-info h3 {
+            margin-bottom: 10px;
+            color: #4a5568;
+        }
+
+        .file-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+        }
+
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .detail-label {
+            font-weight: 500;
+            color: #718096;
+        }
+
+        .detail-value {
+            color: #4a5568;
+        }
+
+        .error-message {
+            background: #fed7d7;
+            color: #c53030;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            text-align: center;
+            display: none;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #718096;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+
+            header h1 {
+                font-size: 2rem;
+            }
+
+            .upload-section {
+                padding: 30px 20px;
+            }
+
+            .preview-controls {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .file-details {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-file-pdf"></i> PDF预览工具</h1>
+            <p>上传本地PDF文件进行在线预览</p>
+        </header>
+
+        <div class="upload-section" id="uploadSection">
+            <div class="upload-icon">
+                <i class="fas fa-cloud-upload-alt"></i>
+            </div>
+            <div class="upload-text">拖拽PDF文件到此处，或点击选择文件</div>
+            <input type="file" id="fileInput" class="file-input" accept=".pdf">
+            <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
+                <i class="fas fa-folder-open"></i> 选择PDF文件
+            </button>
+        </div>
+
+        <div class="error-message" id="errorMessage"></div>
+
+        <div class="preview-section" id="previewSection">
+            <div class="preview-controls">
+                <div class="page-info">
+                    第 <span id="currentPage">1</span> 页 / 共 <span id="totalPages">0</span> 页
+                </div>
+                <div class="nav-buttons">
+                    <button class="nav-btn" id="prevPage" onclick="changePage(-1)" disabled>
+                        <i class="fas fa-chevron-left"></i> 上一页
+                    </button>
+                    <button class="nav-btn" id="nextPage" onclick="changePage(1)" disabled>
+                        下一页 <i class="fas fa-chevron-right"></i>
+                    </button>
+                    <button class="nav-btn" onclick="zoomOut()">
+                        <i class="fas fa-search-minus"></i> 缩小
+                    </button>
+                    <button class="nav-btn" onclick="zoomIn()">
+                        <i class="fas fa-search-plus"></i> 放大
+                    </button>
+                </div>
+            </div>
+
+            <div class="preview-container">
+                <canvas id="pdfCanvas" class="pdf-canvas"></canvas>
+            </div>
+
+            <div class="file-info">
+                <h3>文件信息</h3>
+                <div class="file-details">
+                    <div class="detail-item">
+                        <span class="detail-label">文件名：</span>
+                        <span class="detail-value" id="fileName">-</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">文件大小：</span>
+                        <span class="detail-value" id="fileSize">-</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">页数：</span>
+                        <span class="detail-value" id="pageCount">-</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">上传时间：</span>
+                        <span class="detail-value" id="uploadTime">-</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="loading" id="loading" style="display: none;">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>正在加载PDF文件...</p>
+        </div>
+    </div>
+
+    <!-- PDF.js 库 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    <!-- Font Awesome 图标 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+
+    <script>
+        // PDF.js 工作器路径设置
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+
+        // 全局变量
+        let currentPdf = null;
+        let currentPageNum = 1;
+        let totalPages = 0;
+        let scale = 1.5;
+
+        // DOM 元素
+        const fileInput = document.getElementById('fileInput');
+        const uploadSection = document.getElementById('uploadSection');
+        const previewSection = document.getElementById('previewSection');
+        const pdfCanvas = document.getElementById('pdfCanvas');
+        const currentPageSpan = document.getElementById('currentPage');
+        const totalPagesSpan = document.getElementById('totalPages');
+        const prevPageBtn = document.getElementById('prevPage');
+        const nextPageBtn = document.getElementById('nextPage');
+        const errorMessage = document.getElementById('errorMessage');
+        const loading = document.getElementById('loading');
+
+        /**
+         * 初始化应用
+         */
+        function init() {
+            setupEventListeners();
+        }
+
+        /**
+         * 设置事件监听器
+         */
+        function setupEventListeners() {
+            // 文件选择事件
+            fileInput.addEventListener('change', handleFileSelect);
+
+            // 拖拽事件
+            uploadSection.addEventListener('dragover', handleDragOver);
+            uploadSection.addEventListener('dragleave', handleDragLeave);
+            uploadSection.addEventListener('drop', handleFileDrop);
+
+            // 键盘导航
+            document.addEventListener('keydown', handleKeyPress);
+        }
+
+        /**
+         * 处理文件选择
+         */
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file && file.type === 'application/pdf') {
+                loadPdfFile(file);
+            } else {
+                showError('请选择有效的PDF文件');
+            }
+        }
+
+        /**
+         * 处理拖拽悬停
+         */
+        function handleDragOver(event) {
+            event.preventDefault();
+            uploadSection.classList.add('dragover');
+        }
+
+        /**
+         * 处理拖拽离开
+         */
+        function handleDragLeave(event) {
+            event.preventDefault();
+            uploadSection.classList.remove('dragover');
+        }
+
+        /**
+         * 处理文件拖放
+         */
+        function handleFileDrop(event) {
+            event.preventDefault();
+            uploadSection.classList.remove('dragover');
+            
+            const files = event.dataTransfer.files;
+            if (files.length > 0) {
+                const file = files[0];
+                if (file.type === 'application/pdf') {
+                    loadPdfFile(file);
+                } else {
+                    showError('请拖放有效的PDF文件');
+                }
+            }
+        }
+
+        /**
+         * 处理键盘按键
+         */
+        function handleKeyPress(event) {
+            if (!previewSection.classList.contains('active')) return;
+
+            switch (event.key) {
+                case 'ArrowLeft':
+                    changePage(-1);
+                    break;
+                case 'ArrowRight':
+                    changePage(1);
+                    break;
+                case '+':
+                case '=':
+                    zoomIn();
+                    break;
+                case '-':
+                    zoomOut();
+                    break;
+            }
+        }
+
+        /**
+         * 加载PDF文件
+         */
+        async function loadPdfFile(file) {
+            try {
+                showLoading();
+                hideError();
+
+                // 读取文件为ArrayBuffer
+                const arrayBuffer = await readFileAsArrayBuffer(file);
+                
+                // 加载PDF文档
+                const loadingTask = pdfjsLib.getDocument(arrayBuffer);
+                currentPdf = await loadingTask.promise;
+                
+                totalPages = currentPdf.numPages;
+                currentPageNum = 1;
+
+                // 更新UI
+                updateFileInfo(file);
+                updatePageInfo();
+                await renderPage();
+                
+                // 显示预览区域
+                previewSection.classList.add('active');
+                hideLoading();
+
+            } catch (error) {
+                console.error('PDF加载错误:', error);
+                showError('PDF文件加载失败，请检查文件是否损坏');
+                hideLoading();
+            }
+        }
+
+        /**
+         * 将文件读取为ArrayBuffer
+         */
+        function readFileAsArrayBuffer(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsArrayBuffer(file);
+            });
+        }
+
+        /**
+         * 渲染当前页面
+         */
+        async function renderPage() {
+            if (!currentPdf) return;
+
+            try {
+                const page = await currentPdf.getPage(currentPageNum);
+                const viewport = page.getViewport({ scale: scale });
+
+                // 设置canvas尺寸
+                const canvas = pdfCanvas;
+                const context = canvas.getContext('2d');
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+
+                // 渲染页面
+                const renderContext = {
+                    canvasContext: context,
+                    viewport: viewport
+                };
+
+                await page.render(renderContext).promise;
+                updateNavigationButtons();
+
+            } catch (error) {
+                console.error('页面渲染错误:', error);
+                showError('页面渲染失败');
+            }
+        }
+
+        /**
+         * 切换页面
+         */
+        function changePage(delta) {
+            const newPageNum = currentPageNum + delta;
+            if (newPageNum >= 1 && newPageNum <= totalPages) {
+                currentPageNum = newPageNum;
+                updatePageInfo();
+                renderPage();
+            }
+        }
+
+        /**
+         * 放大
+         */
+        function zoomIn() {
+            scale = Math.min(scale + 0.25, 3);
+            renderPage();
+        }
+
+        /**
+         * 缩小
+         */
+        function zoomOut() {
+            scale = Math.max(scale - 0.25, 0.5);
+            renderPage();
+        }
+
+        /**
+         * 更新页面信息
+         */
+        function updatePageInfo() {
+            currentPageSpan.textContent = currentPageNum;
+            totalPagesSpan.textContent = totalPages;
+            document.getElementById('pageCount').textContent = totalPages + ' 页';
+        }
+
+        /**
+         * 更新导航按钮状态
+         */
+        function updateNavigationButtons() {
+            prevPageBtn.disabled = currentPageNum <= 1;
+            nextPageBtn.disabled = currentPageNum >= totalPages;
+        }
+
+        /**
+         * 更新文件信息
+         */
+        function updateFileInfo(file) {
+            document.getElementById('fileName').textContent = file.name;
+            document.getElementById('fileSize').textContent = formatFileSize(file.size);
+            document.getElementById('uploadTime').textContent = new Date().toLocaleString('zh-CN');
+        }
+
+        /**
+         * 格式化文件大小
+         */
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        /**
+         * 显示错误消息
+         */
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+        }
+
+        /**
+         * 隐藏错误消息
+         */
+        function hideError() {
+            errorMessage.style.display = 'none';
+        }
+
+        /**
+         * 显示加载状态
+         */
+        function showLoading() {
+            loading.style.display = 'block';
+        }
+
+        /**
+         * 隐藏加载状态
+         */
+        function hideLoading() {
+            loading.style.display = 'none';
+        }
+
+        // 初始化应用
+        init();
+    </script>
+</body>
+</html>

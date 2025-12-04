@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>学期缴费统计</title>
+    <!-- 引入Element UI样式 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/element-ui@2.15.13/lib/theme-chalk/index.css">
+    <!-- 引入ECharts -->
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+</head>
+<body>
+    <div id="app">
+        <!-- 顶部统计卡片 -->
+        <el-row :gutter="20" class="stat-row">
+            <el-col :span="8">
+                <el-card class="stat-card receivable-card">
+                    <div class="stat-header">
+                        <span class="stat-title">总应收金额</span>
+                        <i class="el-icon-document stat-icon"></i>
+                    </div>
+                    <div class="stat-body">
+                        <div class="stat-value">¥{{ totalReceivable.toFixed(2) }}</div>
+                        <div class="stat-desc">共{{ totalStudents }}名学生</div>
+                    </div>
+                </el-card>
+            </el-col>
+            <el-col :span="8">
+                <el-card class="stat-card paid-card">
+                    <div class="stat-header">
+                        <span class="stat-title">总实收金额</span>
+                        <i class="el-icon-wallet stat-icon"></i>
+                    </div>
+                    <div class="stat-body">
+                        <div class="stat-value">¥{{ totalPaid.toFixed(2) }}</div>
+                        <div class="stat-desc">已缴费率：{{ paidRate }}%</div>
+                    </div>
+                </el-card>
+            </el-col>
+            <el-col :span="8">
+                <el-card class="stat-card arrears-card">
+                    <div class="stat-header">
+                        <span class="stat-title">总欠费金额</span>
+                        <i class="el-icon-warning stat-icon"></i>
+                    </div>
+                    <div class="stat-body">
+                        <div class="stat-value">¥{{ totalArrears.toFixed(2) }}</div>
+                        <div class="stat-desc">共{{ totalArrearsStudents }}名学生欠费</div>
+                    </div>
+                </el-card>
+            </el-col>
+        </el-row>
+
+        <!-- 趋势图区域 -->
+        <el-row :gutter="20" class="chart-row">
+            <el-col :span="12">
+                <div class="chart-container">
+                    <div class="chart-title">各学期缴费情况</div>
+                    <div id="semesterPaymentChart" class="chart"></div>
+                </div>
+            </el-col>
+            <el-col :span="12">
+                <div class="chart-container">
+                    <div class="chart-title">学生人数与缴费次数趋势</div>
+                    <div id="studentPaymentTrendChart" class="chart"></div>
+                </div>
+            </el-col>
+        </el-row>
+
+        <!-- 学期缴费统计表格 -->
+        <div class="semester-stat-section">
+            <div class="stat-header">
+                <span class="section-title">学期缴费统计</span>
+                <div class="filter-bar">
+                    <el-select v-model="filter.year" placeholder="所有年份" class="filter-select">
+                        <el-option label="所有年份" value=""></el-option>
+                        <el-option label="2025年" value="2025"></el-option>
+                        <el-option label="2024年" value="2024"></el-option>
+                    </el-select>
+                    <el-input v-model="filter.keyword" placeholder="搜索学期..." prefix-icon="el-icon-search" class="filter-input"></el-input>
+                </div>
+            </div>
+            <el-table :data="filteredSemesters" border stripe class="semester-table">
+                <el-table-column prop="academicYear" label="学年" min-width="80" align="center"></el-table-column>
+                <el-table-column prop="semester" label="学期" min-width="100"></el-table-column>
+                <el-table-column prop="dateRange" label="起止日期" min-width="150"></el-table-column>
+                <el-table-column prop="totalStudents" label="学生总数" min-width="80" align="center"></el-table-column>
+                <el-table-column prop="totalReceivable" label="总应收" min-width="100" align="right">
+                    <template slot-scope="scope">¥{{ scope.row.totalReceivable.toFixed(2) }}</template>
+                </el-table-column>
+                <el-table-column prop="totalPaid" label="总实收" min-width="100" align="right">
+                    <template slot-scope="scope">¥{{ scope.row.totalPaid.toFixed(2) }}</template>
+                </el-table-column>
+                <el-table-column prop="totalArrears" label="总欠费" min-width="100" align="right">
+                    <template slot-scope="scope">¥{{ scope.row.totalArrears.toFixed(2) }}</template>
+                </el-table-column>
+                <el-table-column prop="paidCount" label="已缴费人数" min-width="100" align="center">
+                    <template slot-scope="scope">
+                        <div class="status-tag paid-tag">{{ scope.row.paidCount }}</div>
+                    </template>
+                </el-table-column>
+                <el-table-column prop="partialCount" label="部分缴费人数" min-width="120" align="center">
+                    <template slot-scope="scope">
+                        <div class="status-tag partial-tag">{{ scope.row.partialCount }}</div>
+                    </template>
+                </el-table-column>
+                <el-table-column prop="unpaidCount" label="未缴费人数" min-width="100" align="center">
+                    <template slot-scope="scope">
+                        <div class="status-tag unpaid-tag">{{ scope.row.unpaidCount }}</div>
+                    </template>
+                </el-table-column>
+                <el-table-column prop="paymentTimes" label="缴费次数" min-width="100" align="center"></el-table-column>
+                <el-table-column label="操作" min-width="100" align="center">
+                    <template slot-scope="scope">
+                        <el-button type="text" class="view-btn" @click="viewDetail(scope.row)">查看详情</el-button>
+                    </template>
+                </el-table-column>
+            </el-table>
+        </div>
+
+        <!-- 学期缴费详情弹窗 -->
+        <el-dialog :title="`学期缴费详情 - ${currentDetail.academicYear}年${currentDetail.semester}`" :visible.sync="dialogVisible" width="60%">
+            <div class="dialog-content">
+                <!-- 弹窗顶部统计卡片 -->
+                <div class="dialog-stat-row">
+                    <el-card class="dialog-stat-card receivable-card">
+                        <div class="stat-value">¥{{ currentDetail.totalReceivable.toFixed(2) }}</div>
+                        <div class="stat-title">总应收金额</div>
+                    </el-card>
+                    <el-card class="dialog-stat-card paid-card">
+                        <div class="stat-value">¥{{ currentDetail.totalPaid.toFixed(2) }}</div>
+                        <div class="stat-title">总实收金额</div>
+                    </el-card>
+                    <el-card class="dialog-stat-card arrears-card">
+                        <div class="stat-value">¥{{ currentDetail.totalArrears.toFixed(2) }}</div>
+                        <div class="stat-title">总欠费金额</div>
+                    </el-card>
+                </div>
+
+                <!-- 学期信息 -->
+                <div class="semester-info">
+                    <h3 class="info-title">学期信息</h3>
+                    <div class="info-row">
+                        <div class="info-item">
+                            <span class="info-label">学年</span>
+                            <span class="info-value">{{ currentDetail.academicYear }}年</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">学期</span>
+                            <span class="info-value">{{ currentDetail.semester }}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">起止日期</span>
+                            <span class="info-value">{{ currentDetail.dateRange }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 学生缴费情况 -->
+                <div class="student-payment-section">
+                    <h3 class="info-title">学生缴费情况</h3>
+                    <div class="payment-status-row">
+                        <div class="status-card paid-status">
+                            <div class="status-value">{{ currentDetail.paidCount }}</div>
+                            <div class="status-label">已缴费学生</div>
+                        </div>
+                        <div class="status-card partial-status">
+                            <div class="status-value">{{ currentDetail.partialCount }}</div>
+                            <div class="status-label">部分缴费学生</div>
+                        </div>
+                        <div class="status-card unpaid-status">
+                            <div class="status-value">{{ currentDetail.unpaidCount }}</div>
+                            <div class="status-label">未缴费学生</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div slot="footer" class="dialog-footer">
+                <el-button @click="dialogVisible = false">关闭</el-button>
+            </div>
+        </el-dialog>
+    </div>
+
+    <!-- 引入Vue和Element UI -->
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.7.14/dist/vue.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/element-ui@2.15.13/lib/index.js"></script>
+    <script>
+        new Vue({
+            el: '#app',
+            data() {
+                return {
+                    // 筛选条件
+                    filter: {
+                        year: '', // 年份筛选（空=所有年份）
+                        keyword: '' // 学期搜索关键词
+                    },
+                    // 学期统计原始数据（模拟接口返回）
+                    semesters: [
+                        {
+                            academicYear: 2025,
+                            semester: '秋季学期',
+                            dateRange: '2025-09-01至2025-12-31',
+                            totalStudents: 0,
+                            totalReceivable: 0.00,
+                            totalPaid: 0.00,
+                            totalArrears: 0.00,
+                            paidCount: 0,
+                            partialCount: 0,
+                            unpaidCount: 0,
+                            paymentTimes: 0
+                        },
+                        {
+                            academicYear: 2025,
+                            semester: '春季学期',
+                            dateRange: '2025-02-20至2025-06-30',
+                            totalStudents: 0,
+                            totalReceivable: 0.00,
+                            totalPaid: 0.00,
+                            totalArrears: 0.00,
+                            paidCount: 0,
+                            partialCount: 0,
+                            unpaidCount: 0,
+                            paymentTimes: 0
+                        },
+                        {
+                            academicYear: 2024,
+                            semester: '秋季学期',
+                            dateRange: '2024-09-01至2024-12-31',
+                            totalStudents: 0,
+                            totalReceivable: 0.00,
+                            totalPaid: 0.00,
+                            totalArrears: 0.00,
+                            paidCount: 0,
+                            partialCount: 0,
+                            unpaidCount: 0,
+                            paymentTimes: 0
+                        }
+                    ],
+                    // 趋势图数据（与semesters顺序一致）
+                    semesterLabels: ['2025年秋季学期', '2025年春季学期', '2024年秋季学期'],
+                    receivableData: [0, 0, 0], // 各学期总应收
+                    paidData: [0, 0, 0], // 各学期总实收
+                    arrearsData: [0, 0, 0], // 各学期总欠费
+                    studentCountData: [0, 0, 0], // 各学期学生人数
+                    paymentTimesData: [0, 0, 0], // 各学期缴费次数
+                    // 统计数据（动态计算）
+                    totalReceivable: 0.00, // 总应收
+                    totalPaid: 0.00, // 总实收
+                    totalArrears: 0.00, // 总欠费（总应收-总实收）
+                    totalStudents: 0, // 总学生数
+                    paidRate: 'NaN', // 已缴费率（总实收/总应收*100%）
+                    totalArrearsStudents: 0, // 总欠费学生数（未缴费人数之和）
+                    // 弹窗状态
+                    dialogVisible: false, // 弹窗是否显示
+                    currentDetail: {} // 当前查看的学期详情
+                };
+            },
+            computed: {
+                // 筛选后的学期数据
+                filteredSemesters() {
+                    const { year, keyword } = this.filter;
+                    return this.semesters.filter(item => {
+                        // 过滤年份（空=所有年份）
+                        if (year && item.academicYear !== parseInt(year)) return false;
+                        // 过滤关键词（学期名称）
+                        if (keyword && !item.semester.includes(keyword)) return false;
+                        return true;
+                    });
+                }
+            },
+            mounted() {
+                // 计算统计数据（总应收、总实收等）
+                this.calculateTotalStats();
+                // 初始化趋势图
+                this.initSemesterPaymentChart();
+                this.initStudentPaymentTrendChart();
+            },
+            methods: {
+                /**
+                 * 计算总统计数据
+                 */
+                calculateTotalStats() {
+                    // 总应收、总实收、总欠费
+                    this.totalReceivable = this.semesters.reduce((sum, item) => sum + item.totalReceivable, 0);
+                    this.totalPaid = this.semesters.reduce((sum, item) => sum + item.totalPaid, 0);
+                    this.totalArrears = this.totalReceivable - this.totalPaid;
+                    // 总学生数
+                    this.totalStudents = this.semesters.reduce((sum, item) => sum + item.totalStudents, 0);
+                    // 已缴费率（避免除以0）
+                    this.paidRate = this.totalReceivable > 0 ? ((this.totalPaid / this.totalReceivable) * 100).toFixed(2) : 'NaN';
+                    // 总欠费学生数（未缴费人数之和）
+                    this.totalArrearsStudents = this.semesters.reduce((sum, item) => sum + item.unpaidCount, 0);
+                },
+                /**
+                 * 初始化「各学期缴费情况」图表（柱状图）
+                 */
+                initSemesterPaymentChart() {
+                    const chartDom = document.getElementById('semesterPaymentChart');
+                    const myChart = echarts.init(chartDom);
+                    const option = {
+                        tooltip: {
+                            trigger: 'axis',
+                            formatter: '{b}<br>{a}: ¥{c}' // 提示内容（b=学期，a=系列名称，c=数值）
+                        },
+                        legend: {
+                            data: ['应收金额', '实收金额', '欠费金额'],
+                            bottom: 0 // 图例显示在底部
+                        },
+                        xAxis: {
+                            type: 'category',
+                            data: this.semesterLabels,
+                            axisLabel: {
+                                rotate: 30, // x轴标签旋转30度（避免重叠）
+                                fontSize: 12 // 标签字体大小
+                            }
+                        },
+                        yAxis: {
+                            type: 'value',
+                            axisLabel: {
+                                formatter: '¥{value}' // y轴标签格式（金额）
+                            }
+                        },
+                        series: [
+                            {
+                                name: '应收金额',
+                                type: 'bar',
+                                data: this.receivableData,
+                                itemStyle: { color: '#409EFF' }, // 蓝色（与总应收卡片一致）
+                                barWidth: '20%' // 柱子宽度
+                            },
+                            {
+                                name: '实收金额',
+                                type: 'bar',
+                                data: this.paidData,
+                                itemStyle: { color: '#67C23A' }, // 绿色（与总实收卡片一致）
+                                barWidth: '20%'
+                            },
+                            {
+                                name: '欠费金额',
+                                type: 'bar',
+                                data: this.arrearsData,
+                                itemStyle: { color: '#F56C6C' }, // 红色（与总欠费卡片一致）
+                                barWidth: '20%'
+                            }
+                        ],
+                        grid: {
+                            left: '3%',
+                            right: '3%',
+                            bottom: '15%',
+                            top: '5%',
+                            containLabel: true // 图表包含标签
+                        }
+                    };
+                    myChart.setOption(option);
+                    // 监听窗口resize（图表自适应）
+                    window.addEventListener('resize', () => myChart.resize());
+                },
+                /**
+                 * 初始化「学生人数与缴费次数趋势」图表（折线图）
+                 */
+                initStudentPaymentTrendChart() {
+                    const chartDom = document.getElementById('studentPaymentTrendChart');
+                    const myChart = echarts.init(chartDom);
+                    const option = {
+                        tooltip: {
+                            trigger: 'axis',
+                            formatter: '{b}<br>{a}: {c}' // 提示内容（b=学期，a=系列名称，c=数值）
+                        },
+                        legend: {
+                            data: ['学生人数', '缴费次数'],
+                            bottom: 0 // 图例显示在底部
+                        },
+                        xAxis: {
+                            type: 'category',
+                            data: this.semesterLabels,
+                            axisLabel: {
+                                rotate: 30, // x轴标签旋转30度（避免重叠）
+                                fontSize: 12 // 标签字体大小
+                            }
+                        },
+                        yAxis: {
+                            type: 'value',
+                            axisLabel: {
+                                formatter: '{value}' // y轴标签格式（人数/次数）
+                            }
+                        },
+                        series: [
+                            {
+                                name: '学生人数',
+                                type: 'line',
+                                data: this.studentCountData,
+                                itemStyle: { color: '#67C23A' }, // 绿色（与已缴费人数一致）
+                                lineStyle: { color: '#67C23A' }, // 线条颜色
+                                symbol: 'circle', // 数据点形状（圆形）
+                                symbolSize: 8 // 数据点大小
+                            },
+                            {
+                                name: '缴费次数',
+                                type: 'line',
+                                data: this.paymentTimesData,
+                                itemStyle: { color: '#409EFF' }, // 蓝色（与缴费次数一致）
+                                lineStyle: { color: '#409EFF' }, // 线条颜色
+                                symbol: 'circle', // 数据点形状（圆形）
+                                symbolSize: 8 // 数据点大小
+                            }
+                        ],
+                        grid: {
+                            left: '3%',
+                            right: '3%',
+                            bottom: '15%',
+                            top: '5%',
+                            containLabel: true // 图表包含标签
+                        }
+                    };
+                    myChart.setOption(option);
+                    // 监听窗口resize（图表自适应）
+                    window.addEventListener('resize', () => myChart.resize());
+                },
+                /**
+                 * 查看学期详情（打开弹窗）
+                 * @param {Object} row - 选中的学期数据
+                 */
+                viewDetail(row) {
+                    this.currentDetail = { ...row }; // 深拷贝选中的学期数据（避免修改原数据）
+                    this.dialogVisible = true; // 显示弹窗
+                }
+            }
+        });
+    </script>
+
+    <!-- 自定义样式 -->
+    <style scoped>
+        /* 基础容器 */
+        #app {
+            padding: 20px;
+            background-color: #f5f5f5;
+            min-height: 100vh;
+        }
+
+        /* 统计卡片 */
+        .stat-row {
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            border: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-radius: 8px;
+        }
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 15px 10px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .stat-title {
+            font-size: 14px;
+            color: #666;
+        }
+        .stat-icon {
+            font-size: 18px;
+        }
+        .receivable-card .stat-icon {
+            color: #409EFF; /* 总应收-蓝色 */
+        }
+        .paid-card .stat-icon {
+            color: #67C23A; /* 总实收-绿色 */
+        }
+        .arrears-card .stat-icon {
+            color: #F56C6C; /* 总欠费-红色 */
+        }
+        .stat-body {
+            padding: 15px;
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        .stat-desc {
+            font-size: 12px;
+            color: #999;
+        }
+
+        /* 趋势图 */
+        .chart-row {
+            margin-bottom: 20px;
+        }
+        .chart-container {
+            background-color: #fff;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            height: 300px;
+        }
+        .chart-title {
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 10px;
+            padding: 0 15px;
+        }
+        .chart {
+            width: 100%;
+            height: calc(100% - 30px);
+        }
+
+        /* 学期统计区域 */
+        .semester-stat-section {
+            background-color: #fff;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .section-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+        }
+        .filter-bar {
+            display: flex;
+            gap: 10px;
+        }
+        .filter-select {
+            width: 120px;
+        }
+        .filter-input {
+            width: 200px;
+        }
+
+        /* 学期表格 */
+        .semester-table {
+            margin-top: 10px;
+        }
+        .semester-table .el-table__header th {
+            background-color: #f0f0f0;
+            font-weight: bold;
+        }
+        .semester-table .el-table__body td {
+            padding: 12px 0;
+            font-size: 14px;
+            color: #333;
+        }
+        .status-tag {
+            padding: 4px 8px;
+            border-radius: 4px;
+            color: #fff;
+            font-size: 12px;
+        }
+        .paid-tag {
+            background-color: #67C23A; /* 已缴费-绿色 */
+        }
+        .partial-tag {
+            background-color: #E6A23C; /* 部分缴费-黄色 */
+        }
+        .unpaid-tag {
+            background-color: #F56C6C; /* 未缴费-红色 */
+        }
+        .view-btn {
+            color: #409EFF; /* 查看详情-蓝色 */
+            cursor: pointer;
+        }
+
+        /* 弹窗 */
+        .dialog-content {
+            padding: 20px;
+        }
+        .dialog-stat-row {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .dialog-stat-card {
+            flex: 1;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .dialog-stat-card .stat-value {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .dialog-stat-card .stat-title {
+            font-size: 14px;
+            color: #666;
+        }
+        .receivable-card {
+            background-color: #e6f3ff; /* 总应收-浅蓝 */
+        }
+        .paid-card {
+            background-color: #f0f9eb; /* 总实收-浅绿 */
+        }
+        .arrears-card {
+            background-color: #fff3f3; /* 总欠费-浅红 */
+        }
+
+        /* 学期信息 */
+        .semester-info {
+            margin-bottom: 20px;
+        }
+        .info-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 15px;
+        }
+        .info-row {
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+        .info-item {
+            flex: 1;
+            min-width: 200px;
+        }
+        .info-label {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        .info-value {
+            font-size: 16px;
+            color: #333;
+        }
+
+        /* 学生缴费情况 */
+        .student-payment-section {
+            margin-bottom: 20px;
+        }
+        .payment-status-row {
+            display: flex;
+            gap: 20px;
+        }
+        .status-card {
+            flex: 1;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            color: #fff;
+        }
+        .status-value {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .status-label {
+            font-size: 14px;
+        }
+        .paid-status {
+            background-color: #67C23A; /* 已缴费-绿色 */
+        }
+        .partial-status {
+            background-color: #E6A23C; /* 部分缴费-黄色 */
+        }
+        .unpaid-status {
+            background-color: #F56C6C; /* 未缴费-红色 */
+        }
+
+        /* 弹窗 footer */
+        .dialog-footer {
+            text-align: right;
+            padding: 10px 20px;
+            border-top: 1px solid #f0f0f0;
+        }
+    </style>
+</body>
+</html>

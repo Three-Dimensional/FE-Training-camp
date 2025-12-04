@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>四川省盐业学校缴费专用收据</title>
+    
+    <!-- 引入Vue2 CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.7.14/dist/vue.js"></script>
+    <!-- 引入Element UI样式 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/element-ui@2.15.14/lib/theme-chalk/index.css">
+    <!-- 引入Element UI JS -->
+    <script src="https://cdn.jsdelivr.net/npm/element-ui@2.15.14/lib/index.js"></script>
+    <!-- 引入字体图标（Element UI依赖） -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
+
+    <style>
+        /* 页面基础样式 */
+        body {
+            font-family: "微软雅黑", "宋体", sans-serif;
+            background-color: #f0f2f5;
+            padding: 20px;
+        }
+
+        /* 收据容器样式 */
+        .payment-receipt-wrap {
+            max-width: 850px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 30px;
+            border: 1px solid #e0e0e0;
+            box-shadow: 0 2px 12px 0 rgba(0,0,0,0.1);
+        }
+
+        /* 收据标题样式 */
+        .receipt-title {
+            font-size: 22px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 25px;
+            color: #333;
+        }
+
+        /* 头部信息行样式 */
+        .header-info {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px dashed #e0e0e0;
+        }
+
+        .header-info .left {
+            float: left;
+        }
+
+        .header-info .right {
+            float: right;
+        }
+
+        /* 收款信息样式 */
+        .received-info {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 25px;
+            padding: 15px 0;
+            border-top: 1px dashed #e0e0e0;
+            border-bottom: 1px dashed #e0e0e0;
+        }
+
+        /* 缴费项目表格样式 */
+        .items-table {
+            margin-bottom: 25px;
+        }
+
+        .items-table .el-table__header th {
+            background-color: #f8f8f8;
+            border-color: #e0e0e0;
+            color: #333;
+            font-weight: normal;
+        }
+
+        .items-table .el-table__body td {
+            border-color: #e0e0e0;
+            color: #666;
+        }
+
+        .items-table .amount-column {
+            text-align: right;
+            padding-right: 20px;
+        }
+
+        /* 总额样式 */
+        .total-section {
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 30px;
+            padding-top: 15px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .total-section .total-label {
+            float: right;
+        }
+
+        /* 底部信息样式 */
+        .footer-info {
+            font-size: 14px;
+            color: #666;
+            padding-top: 20px;
+            border-top: 1px dashed #e0e0e0;
+        }
+
+        .footer-info .left {
+            float: left;
+        }
+
+        .footer-info .center {
+            text-align: center;
+        }
+
+        .footer-info .right {
+            float: right;
+        }
+
+        /* 公章图片样式 */
+        .seal-img {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 180px;
+            height: 180px;
+            opacity: 0.7;
+            z-index: -1;
+        }
+
+        /* 打印适配样式 */
+        @media print {
+            body {
+                background-color: #fff;
+                padding: 0;
+            }
+
+            .payment-receipt-wrap {
+                box-shadow: none;
+                border: none;
+                padding: 0;
+            }
+
+            .el-button {
+                display: none;
+            }
+
+            .seal-img {
+                opacity: 0.85;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div class="payment-receipt-wrap">
+            <!-- 收据标题 -->
+            <h2 class="receipt-title">四川省盐业学校缴费专用收据</h2>
+
+            <!-- 头部信息：日期 + 收据号 -->
+            <div class="header-info">
+                <div class="left">
+                    <span class="el-tag el-tag--info el-tag--small">日期:</span> {{ receiptInfo.date }}
+                </div>
+                <div class="right">
+                    <span class="el-tag el-tag--info el-tag--small">NO:</span> {{ receiptInfo.receiptNo }}
+                </div>
+                <div style="clear: both;"></div>
+            </div>
+
+            <!-- 收款信息：缴费人 + 专业 + 学年 -->
+            <div class="received-info">
+                <span class="el-tag el-tag--info el-tag--small">收到:</span> {{ receiptInfo.payerName }} {{ receiptInfo.major }} {{ receiptInfo.academicYear }}
+            </div>
+
+            <!-- 缴费项目表格 -->
+            <el-table 
+                :data="paymentItems" 
+                class="items-table" 
+                border 
+                stripe
+                :header-cell-style="{ background: '#f8f8f8' }"
+            >
+                <el-table-column prop="name" label="项目" width="350"></el-table-column>
+                <el-table-column prop="amount" label="金额（元）" width="200">
+                    <template slot-scope="scope">
+                        <span class="amount-column">{{ scope.row.amount }}</span>
+                    </template>
+                </el-table-column>
+                <el-table-column prop="remark" label="备注"></el-table-column>
+            </el-table>
+
+            <!-- 总额展示 -->
+            <div class="total-section">
+                <div class="total-label">
+                    <span class="el-tag el-tag--danger el-tag--small">小写:</span> {{ receiptInfo.totalAmount }}
+                </div>
+                <div style="clear: both;"></div>
+            </div>
+
+            <!-- 底部信息：单位 + 缴费日期 + 收款人 -->
+            <div class="footer-info">
+                <div class="left">
+                    <span class="el-tag el-tag--info el-tag--small">单位:</span> {{ receiptInfo.unit }}
+                </div>
+                <div class="center">
+                    <span class="el-tag el-tag--info el-tag--small">缴费日期:</span> {{ receiptInfo.paymentDate }}
+                </div>
+                <div class="right">
+                    <span class="el-tag el-tag--info el-tag--small">收款人:</span> {{ receiptInfo.collector }}
+                </div>
+                <div style="clear: both;"></div>
+            </div>
+
+            <!-- 公章图片（请替换为实际图片路径） -->
+            <img src="./img/seal.png" alt="财务专用章" class="seal-img">
+
+            <!-- 操作按钮 -->
+            <div style="text-align: right; margin-top: 20px;">
+                <el-button type="primary" @click="handlePrint">打印收据</el-button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        new Vue({
+            el: '#app',
+            data() {
+                return {
+                    // 收据主信息（模拟接口返回）
+                    receiptInfo: {
+                        date: '2025年6月22日',
+                        receiptNo: '10205859-1,43031',
+                        payerName: '唐若雨',
+                        major: '生物化工技术应用',
+                        academicYear: '2025学年',
+                        unit: '四川省盐业学校',
+                        paymentDate: '网络',
+                        collector: '网络',
+                        totalAmount: '2,800.00'
+                    },
+                    // 缴费项目列表（模拟接口返回）
+                    paymentItems: [
+                        { name: '服务性收费', amount: '600.00', remark: '' },
+                        { name: '教材费', amount: '600.00', remark: '自贡校区' },
+                        { name: '军训伙食费', amount: '300.00', remark: '微信' },
+                        { name: '体检费', amount: '200.00', remark: '' },
+                        { name: '校服费', amount: '300.00', remark: '' },
+                        { name: '学费合计', amount: '800.00', remark: '' }
+                    ]
+                };
+            },
+            methods: {
+                // 打印功能实现
+                handlePrint() {
+                    window.print();
+                }
+            }
+        });
+    </script>
+</body>
+</html>
